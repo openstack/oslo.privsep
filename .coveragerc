@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = privsep
+omit = privsep/tests/*,privsep/openstack/*
+
+[report]
+ignore-errors = True
