@@ -68,30 +68,27 @@ class TestSerialization(base.BaseTestCase):
         self.assertSendable(-84)
 
     def test_bytes(self):
-        # TODO(gus): json needs help to support non-unicode strings
-        # data = b'\x00\x01\x02\xfd\xfe\xff'
-        # self.assertSendable(data)
-        pass
+        data = b'\x00\x01\x02\xfd\xfe\xff'
+        self.assertSendable(data)
 
     def test_unicode(self):
         data = u'\u4e09\u9df9'
         self.assertSendable(data)
 
     def test_tuple(self):
-        # NB! currently tuples get converted to lists by serialization.
-        self.assertEqual([1, 'foo'], self.send((1, 'foo')))
+        self.assertSendable((1, 'foo'))
 
     def test_list(self):
-        self.assertSendable([1, 'foo'])
+        # NB! currently lists get converted to tuples by serialization.
+        self.assertEqual((1, 'foo'), self.send([1, 'foo']))
 
     def test_dict(self):
         self.assertSendable(
             {
                 'a': 'b',
-                # TODO(gus): json needs help to support non-string keys
-                # 1: 2,
-                # None: None,
-                # (1, 2): (3, 4),
+                1: 2,
+                None: None,
+                (1, 2): (3, 4),
             }
         )
 

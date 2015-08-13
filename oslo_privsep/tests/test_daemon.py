@@ -47,8 +47,8 @@ class LogTest(testctx.TestContextTestCase):
             name=None, level=logging.INFO))
 
     def test_priv_log(self):
-        logme(logging.DEBUG, 'test@DEBUG')
-        logme(logging.WARN, 'test@WARN')
+        logme(logging.DEBUG, u'test@DEBUG')
+        logme(logging.WARN, u'test@WARN')
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
@@ -58,7 +58,7 @@ class LogTest(testctx.TestContextTestCase):
         #
         # self.assertNotIn('test@DEBUG', self.logger.output)
 
-        self.assertIn('test@WARN', self.logger.output)
+        self.assertIn(u'test@WARN', self.logger.output)
 
 
 @testtools.skipIf(platform.system() != 'Linux',

@@ -14,27 +14,23 @@
 
 """Serialization/Deserialization for privsep.
 
-The wire format is a message length encoded as a simple unsigned int
-in native byte order (@I in struct.pack-speak), followed by that many
-bytes of UTF-8 JSON data.
-
+The wire format is a stream of msgpack objects encoding primitive
+python datatypes.  Msgpack 'raw' is assumed to be a valid utf8 string
+(msgpack 2.0 'bin' type is used for bytes).  Python lists are
+converted to tuples during serialization/deserialization.
 """
 
-import json
 import logging
 import socket
-import struct
 import threading
 
+import msgpack
 import six
 
 from oslo_privsep._i18n import _
 
 
 LOG = logging.getLogger(__name__)
-
-_HDRFMT = '@I'
-_HDRFMT_LEN = struct.calcsize(_HDRFMT)
 
 
 try:
@@ -55,14 +51,8 @@ class Serializer(object):
         self.writesock = writesock
 
     def send(self, msg):
-        buf = json.dumps(msg, ensure_ascii=False).encode('utf-8')
-
-        # json (the library) doesn't support push parsing and JSON
-        # (the format) doesn't include length information, so we can't
-        # decode without reading the entire input and blocking.  Avoid
-        # that by explicitly communicating the JSON message length
-        # first.
-        self.writesock.sendall(struct.pack(_HDRFMT, len(buf)) + buf)
+        buf = msgpack.packb(msg, use_bin_type=True)
+        self.writesock.sendall(buf)
 
     def close(self):
         # Hilarious. `socket._socketobject.close()` doesn't actually
@@ -74,28 +64,20 @@ class Serializer(object):
 class Deserializer(six.Iterator):
     def __init__(self, readsock):
         self.readsock = readsock
+        self.unpacker = msgpack.Unpacker(use_list=False, encoding='utf-8')
 
     def __iter__(self):
         return self
 
-    def _read_n(self, n):
-        """Read exactly N bytes.  Raises EOFError on premature EOF"""
-        data = []
-        while n > 0:
-            tmp = self.readsock.recv(n)
-            if not tmp:
-                raise EOFError(_('Premature EOF during deserialization'))
-            data.append(tmp)
-            n -= len(tmp)
-        return b''.join(data)
-
     def __next__(self):
-        try:
-            buflen, = struct.unpack(_HDRFMT, self._read_n(_HDRFMT_LEN))
-        except EOFError:
-            raise StopIteration
-
-        return json.loads(self._read_n(buflen).decode('utf-8'))
+        while True:
+            try:
+                return next(self.unpacker)
+            except StopIteration:
+                buf = self.readsock.recv(4096)
+                if not buf:
+                    raise
+                self.unpacker.feed(buf)
 
 
 class Future(object):
