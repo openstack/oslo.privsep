@@ -25,6 +25,8 @@ context = priv_context.PrivContext(
     # This context allows entrypoints anywhere below oslo_privsep.tests.
     oslo_privsep.tests.__name__,
     pypath=__name__ + '.context',
+    # This is one of the rare cases where we actually want zero powers:
+    capabilities=[],
 )
 
 

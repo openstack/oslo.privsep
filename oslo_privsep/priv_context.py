@@ -17,19 +17,34 @@ import enum
 import functools
 
 from oslo_config import cfg
+from oslo_config import types
 from oslo_log import log as logging
 
+from oslo_privsep import capabilities
 from oslo_privsep import daemon
 from oslo_privsep._i18n import _, _LW
 
 
 LOG = logging.getLogger(__name__)
 
+
+def CapNameOrInt(value):
+    value = str(value).strip()
+    try:
+        return capabilities.CAPS_BYNAME[value]
+    except KeyError:
+        return int(value)
+
+
 OPTS = [
     cfg.StrOpt('user',
                help=_('User that the privsep daemon should run as.')),
     cfg.StrOpt('group',
                help=_('Group that the privsep daemon should run as.')),
+    cfg.Opt('capabilities',
+            type=types.List(CapNameOrInt), default=[],
+            help=_('List of Linux capabilities retained by the privsep '
+                   'daemon.')),
     cfg.StrOpt('helper_command',
                default=('sudo privsep-helper'
                         # TODO(gus): how do I find a good config path?
@@ -48,7 +63,19 @@ class Method(enum.Enum):
 
 
 class PrivContext(object):
-    def __init__(self, prefix, cfg_section='privsep', pypath=None):
+    def __init__(self, prefix, cfg_section='privsep', pypath=None,
+                 capabilities=None):
+
+        # Note that capabilities=[] means retaining no capabilities
+        # and leaves even uid=0 with no powers except being able to
+        # read/write to the filesystem as uid=0.  This might be what
+        # you want, but probably isn't.
+        #
+        # There is intentionally no way to say "I want all the
+        # capabilities."
+        if capabilities is None:
+            raise ValueError('capabilities is a required parameter')
+
         self.pypath = pypath
         self.prefix = prefix
         self.cfg_section = cfg_section
@@ -56,6 +83,8 @@ class PrivContext(object):
         self.channel = None
 
         cfg.CONF.register_opts(OPTS, group=cfg_section)
+        cfg.CONF.set_default('capabilities', group=cfg_section,
+                             default=capabilities)
 
     @property
     def conf(self):
