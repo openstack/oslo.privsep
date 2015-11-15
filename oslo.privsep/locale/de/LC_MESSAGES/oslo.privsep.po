@@ -1,0 +1,58 @@
+# Andreas Jaeger <jaegerandi@gmail.com>, 2015. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: oslo.privsep 0.0.1.dev8\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-11-15 06:24+0000\n"
+"PO-Revision-Date: 2015-11-13 05:20+0000\n"
+"Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
+"Language: de\n"
+"Language-Team: German\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.1.1\n"
+
+msgid "Command to invoke via sudo/rootwrap to start the privsep daemon."
+msgstr ""
+"Kommando, welches ausgeführt werden muß via sudo/rootwrap um den Privsep "
+"Dämon zu starten."
+
+msgid "Failed to remove supplemental groups"
+msgstr "Fehler beim Entfernen zusätzlicher Gruppen"
+
+#, python-format
+msgid "Failed to set gid %s"
+msgstr "Fehler beim Festlegen von GID %s"
+
+#, python-format
+msgid "Failed to set uid %s"
+msgstr "Fehler beim Festlegen von Benutzer-ID %s"
+
+msgid "Group that the privsep daemon should run as."
+msgstr "Gruppe als die der Privsep Dämon laufen soll."
+
+#, python-format
+msgid "Invalid privsep function: %s not exported"
+msgstr "Invalide Privsep Funktion: %s ist nicht exportiert."
+
+msgid "Premature EOF during deserialization"
+msgstr "Vorzeitiges Dateiende während Deserilization"
+
+msgid "Premature eof waiting for privileged process"
+msgstr "Vorzeitiges Dateiende beim Warten auf den priviligierten Prozeß"
+
+msgid "Privsep daemon failed to start"
+msgstr "Der Privsep Dämon konnte nicht gestartet werden."
+
+#, python-format
+msgid "Unexpected response: %r"
+msgstr "Unerwartete Antwort: %r"
+
+#, python-format
+msgid "Unknown privsep cmd: %s"
+msgstr "Unbekanntes Privsep Kommando: %s"
+
+msgid "User that the privsep daemon should run as."
+msgstr "User als der der Privsep Dämon laufen soll."
