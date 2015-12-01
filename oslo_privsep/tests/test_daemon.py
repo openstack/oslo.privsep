@@ -13,10 +13,14 @@
 #    under the License.
 
 import fixtures
+import mock
 import time
 
 from oslo_log import log as logging
+from oslotest import base
 
+from oslo_privsep import capabilities
+from oslo_privsep import daemon
 from oslo_privsep.tests import testctx
 
 
@@ -53,7 +57,40 @@ class LogTest(testctx.TestContextTestCase):
         self.assertIn('test@WARN', self.logger.output)
 
 
-class TestDaemon(testctx.TestContextTestCase):
+class TestDaemon(base.BaseTestCase):
+
+    @mock.patch('os.setuid')
+    @mock.patch('os.setgid')
+    @mock.patch('os.setgroups')
+    @mock.patch('oslo_privsep.capabilities.set_keepcaps')
+    @mock.patch('oslo_privsep.capabilities.drop_all_caps_except')
+    def test_drop_privs(self, mock_dropcaps, mock_keepcaps,
+                        mock_setgroups, mock_setgid, mock_setuid):
+        channel = mock.NonCallableMock()
+        context = mock.NonCallableMock()
+        context.conf.user = 42
+        context.conf.group = 84
+        context.conf.capabilities = [
+            capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN]
+
+        d = daemon.Daemon(channel, context)
+        d._drop_privs()
+
+        mock_setuid.assert_called_once_with(42)
+        mock_setgid.assert_called_once_with(84)
+        mock_setgroups.assert_called_once_with([])
+
+        self.assertItemsEqual(
+            [mock.call(True), mock.call(False)],
+            mock_keepcaps.mock_calls)
+
+        mock_dropcaps.assert_called_once_with(
+            set((capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN)),
+            set((capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN)),
+            [])
+
+
+class TestWithContext(testctx.TestContextTestCase):
 
     def test_unexported(self):
         self.assertRaisesRegexp(

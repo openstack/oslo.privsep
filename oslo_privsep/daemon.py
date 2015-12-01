@@ -62,6 +62,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from oslo_privsep import capabilities
 from oslo_privsep import comm
 from oslo_privsep._i18n import _, _LE, _LI
 
@@ -322,6 +323,7 @@ class Daemon(object):
         self.context = context
         self.user = context.conf.user
         self.group = context.conf.group
+        self.caps = set(context.conf.capabilities)
 
     def run(self):
         """Run request loop. Sets up environment, then calls loop()"""
@@ -339,18 +341,47 @@ class Daemon(object):
             # stderr is left untouched
 
     def _drop_privs(self):
-        if self.group is not None:
-            try:
-                os.setgroups([])
-            except OSError:
-                msg = _('Failed to remove supplemental groups')
-                LOG.critical(msg)
-                raise FailedToDropPrivileges(msg)
-        if self.user is not None:
-            setuid(self.user)
+        try:
+            # Keep current capabilities across setuid away from root.
+            capabilities.set_keepcaps(True)
+
+            if self.group is not None:
+                try:
+                    os.setgroups([])
+                except OSError:
+                    msg = _('Failed to remove supplemental groups')
+                    LOG.critical(msg)
+                    raise FailedToDropPrivileges(msg)
+
+            if self.user is not None:
+                setuid(self.user)
+
+            if self.group is not None:
+                setgid(self.group)
+
+        finally:
+            capabilities.set_keepcaps(False)
 
         LOG.info(_LI('privsep process running with uid/gid: %(uid)s/%(gid)s'),
                  {'uid': os.getuid(), 'gid': os.getgid()})
+
+        capabilities.drop_all_caps_except(self.caps, self.caps, [])
+
+        def fmt_caps(capset):
+            if not capset:
+                return 'none'
+            return '|'.join(sorted(capabilities.CAPS_BYVALUE[c]
+                                   for c in capset))
+
+        eff, prm, inh = capabilities.get_caps()
+        LOG.info(
+            _LI('privsep process running with capabilities '
+                '(eff/prm/inh): %(eff)s/%(prm)s/%(inh)s'),
+            {
+                'eff': fmt_caps(eff),
+                'prm': fmt_caps(prm),
+                'inh': fmt_caps(inh),
+            })
 
     def _process_cmd(self, cmd, *args):
         if cmd == Message.PING:
