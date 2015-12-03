@@ -45,18 +45,21 @@ The privsep daemon exits when the communication channel is closed,
 
 import enum
 import errno
-import fcntl
-import grp
 import io
 import logging as pylogging
 import os
-import pwd
+import platform
 import shlex
 import socket
 import subprocess
 import sys
 import tempfile
 import threading
+
+if platform.system() == 'Linux':
+    import fcntl
+    import grp
+    import pwd
 
 from oslo_config import cfg
 from oslo_log import log as logging

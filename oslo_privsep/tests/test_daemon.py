@@ -14,10 +14,12 @@
 
 import fixtures
 import mock
+import platform
 import time
 
 from oslo_log import log as logging
 from oslotest import base
+import testtools
 
 from oslo_privsep import capabilities
 from oslo_privsep import daemon
@@ -36,6 +38,8 @@ def logme(level, msg):
     LOG.log(level, '%s', msg)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class LogTest(testctx.TestContextTestCase):
     def setUp(self):
         super(LogTest, self).setUp()
@@ -57,6 +61,8 @@ class LogTest(testctx.TestContextTestCase):
         self.assertIn('test@WARN', self.logger.output)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class TestDaemon(base.BaseTestCase):
 
     @mock.patch('os.setuid')
@@ -90,6 +96,8 @@ class TestDaemon(base.BaseTestCase):
             [])
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class TestWithContext(testctx.TestContextTestCase):
 
     def test_unexported(self):

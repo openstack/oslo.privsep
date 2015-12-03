@@ -15,9 +15,11 @@
 
 import os
 import pipes
+import platform
 import sys
 
 from oslo_log import log as logging
+import testtools
 
 from oslo_privsep import daemon
 from oslo_privsep import priv_context
@@ -54,6 +56,8 @@ def fail(custom=False):
         raise RuntimeError("I can't let you do that Dave")
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class TestSeparation(testctx.TestContextTestCase):
     def test_getpid(self):
         # Verify that priv_getpid() was executed in another process.
@@ -74,6 +78,8 @@ class TestSeparation(testctx.TestContextTestCase):
         self.assertNotMyPid(priv_getpid())
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class RootwrapTest(testctx.TestContextTestCase):
     def setUp(self):
         super(RootwrapTest, self).setUp()
@@ -101,6 +107,8 @@ class RootwrapTest(testctx.TestContextTestCase):
         self.assertNotMyPid(priv_pid)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class TestSerialization(testctx.TestContextTestCase):
     def test_basic_functionality(self):
         self.assertEqual(43, add1(42))
