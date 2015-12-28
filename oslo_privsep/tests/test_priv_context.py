@@ -13,12 +13,12 @@
 #    under the License.
 
 
+import logging
 import os
 import pipes
 import platform
 import sys
 
-from oslo_log import log as logging
 import testtools
 
 from oslo_privsep import daemon

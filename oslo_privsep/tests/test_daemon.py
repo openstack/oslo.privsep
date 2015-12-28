@@ -13,11 +13,11 @@
 #    under the License.
 
 import fixtures
+import logging
 import mock
 import platform
 import time
 
-from oslo_log import log as logging
 from oslotest import base
 import testtools
 
