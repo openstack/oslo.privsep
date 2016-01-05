@@ -131,7 +131,7 @@ class PrivContext(object):
 
     def start(self, method=Method.ROOTWRAP):
         if self.channel is not None:
-            LOG.warn(_LW('privsep daemon already running'))
+            LOG.warning(_LW('privsep daemon already running'))
             return
 
         if method is Method.ROOTWRAP:
