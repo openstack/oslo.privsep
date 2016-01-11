@@ -46,11 +46,13 @@ OPTS = [
             help=_('List of Linux capabilities retained by the privsep '
                    'daemon.')),
     cfg.StrOpt('helper_command',
-               default=('sudo privsep-helper'
-                        # TODO(gus): how do I find a good config path?
-                        ' --config-file=/etc/$project/$project.conf'),
-               help=_('Command to invoke via sudo/rootwrap to start '
-                      'the privsep daemon.')),
+               help=_('Command to invoke to start the privsep daemon if '
+                      'not using the "fork" method. '
+                      'If not specified, a default is generated using '
+                      '"sudo privsep-helper" and arguments designed to '
+                      'recreate the current configuration. '
+                      'This command must accept suitable --privsep_context '
+                      'and --privsep_sock_path arguments.')),
 ]
 
 _ENTRYPOINT_ATTR = 'privsep_entrypoint'

@@ -104,3 +104,29 @@ class TestWithContext(testctx.TestContextTestCase):
         self.assertRaisesRegexp(
             NameError, 'undecorated not exported',
             testctx.context._wrap, undecorated)
+
+    def test_helper_command(self):
+        self.privsep_conf.privsep.helper_command = 'foo --bar'
+        cmd = daemon.RootwrapClientChannel._helper_command(
+            testctx.context, '/tmp/sockpath')
+        expected = [
+            'foo', '--bar',
+            '--privsep_context', testctx.context.pypath,
+            '--privsep_sock_path', '/tmp/sockpath',
+        ]
+        self.assertEqual(expected, cmd)
+
+    def test_helper_command_default(self):
+        self.privsep_conf.config_file = ['/bar.conf', '/baz.conf']
+        self.privsep_conf.config_dir = '/foo.d'
+        cmd = daemon.RootwrapClientChannel._helper_command(
+            testctx.context, '/tmp/sockpath')
+        expected = [
+            'sudo', 'privsep-helper',
+            '--config-file', '/bar.conf',
+            '--config-file', '/baz.conf',
+            '--config-dir', '/foo.d',
+            '--privsep_context', testctx.context.pypath,
+            '--privsep_sock_path', '/tmp/sockpath',
+        ]
+        self.assertEqual(expected, cmd)
