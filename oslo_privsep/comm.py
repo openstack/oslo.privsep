@@ -21,13 +21,13 @@ bytes of UTF-8 JSON data.
 """
 
 import json
+import logging
 import socket
 import struct
 import threading
 
 import six
 
-from oslo_log import log as logging
 from oslo_privsep._i18n import _
 
 

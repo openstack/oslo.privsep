@@ -14,11 +14,11 @@
 
 
 import fixtures
+import logging
 import os
 import sys
 
 from oslo_config import fixture as cfg_fixture
-from oslo_log import log as logging
 
 from oslo_privsep import priv_context
 

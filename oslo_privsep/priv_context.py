@@ -15,10 +15,10 @@
 
 import enum
 import functools
+import logging
 
 from oslo_config import cfg
 from oslo_config import types
-from oslo_log import log as logging
 
 from oslo_privsep import capabilities
 from oslo_privsep import daemon
