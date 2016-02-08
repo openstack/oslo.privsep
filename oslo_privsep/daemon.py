@@ -333,7 +333,8 @@ class RootwrapClientChannel(_ClientChannel):
                 pass
 
             try:
-                cmd.extend(['--config-dir', cfg.CONF.config_dir])
+                if cfg.CONF.config_dir is not None:
+                    cmd.extend(['--config-dir', cfg.CONF.config_dir])
             except cfg.NoSuchOptError:
                 pass
 

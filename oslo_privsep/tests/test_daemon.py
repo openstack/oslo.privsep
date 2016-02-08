@@ -117,6 +117,19 @@ class TestWithContext(testctx.TestContextTestCase):
         self.assertEqual(expected, cmd)
 
     def test_helper_command_default(self):
+        self.privsep_conf.config_file = ['/bar.conf']
+        cmd = daemon.RootwrapClientChannel._helper_command(
+            testctx.context, '/tmp/sockpath')
+        expected = [
+            'sudo', 'privsep-helper',
+            '--config-file', '/bar.conf',
+            # --config-dir arg should be skipped
+            '--privsep_context', testctx.context.pypath,
+            '--privsep_sock_path', '/tmp/sockpath',
+        ]
+        self.assertEqual(expected, cmd)
+
+    def test_helper_command_default_dirtoo(self):
         self.privsep_conf.config_file = ['/bar.conf', '/baz.conf']
         self.privsep_conf.config_dir = '/foo.d'
         cmd = daemon.RootwrapClientChannel._helper_command(
