@@ -33,6 +33,8 @@ class UnprivilegedPrivsepFixture(fixtures.Fixture):
         super(UnprivilegedPrivsepFixture, self).setUp()
 
         self.conf = self.useFixture(cfg_fixture.Config()).conf
+        self.conf.set_override('capabilities', [],
+                               group=self.context.cfg_section)
         for k in ('user', 'group'):
             self.conf.set_override(
                 k, None, group=self.context.cfg_section)
