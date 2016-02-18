@@ -61,6 +61,7 @@ if platform.system() == 'Linux':
     import grp
     import pwd
 
+import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -177,11 +178,24 @@ class _ClientChannel(comm.ClientChannel):
             raise ProtocolError(_('Unexpected response: %r') % result)
 
 
+def fdopen(fd, *args, **kwargs):
+    # NOTE(gus): We can't just use os.fdopen() here and allow the
+    # regular (optional) monkey_patching to do its thing.  Turns out
+    # that regular file objects (as returned by os.fdopen) on python2
+    # are broken in lots of ways regarding blocking behaviour.  We
+    # *need* the newer io.* objects on py2 (doesn't matter on py3,
+    # since the old file code has been replaced with io.*)
+    if eventlet.patcher.is_monkey_patched('os'):
+        return eventlet.greenio.GreenPipe(fd, *args, **kwargs)
+    else:
+        return io.open(fd, *args, **kwargs)
+
+
 def _fd_logger(level=logging.WARN):
     """Helper that returns a file object that is asynchronously logged"""
     read_fd, write_fd = os.pipe()
-    read_end = io.open(read_fd, 'r', 1)
-    write_end = io.open(write_fd, 'w', 1)
+    read_end = fdopen(read_fd, 'r', 1)
+    write_end = fdopen(write_fd, 'w', 1)
 
     def logger(f):
         for line in f:
