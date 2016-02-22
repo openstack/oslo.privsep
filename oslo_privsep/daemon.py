@@ -185,7 +185,7 @@ def fdopen(fd, *args, **kwargs):
     # are broken in lots of ways regarding blocking behaviour.  We
     # *need* the newer io.* objects on py2 (doesn't matter on py3,
     # since the old file code has been replaced with io.*)
-    if eventlet.patcher.is_monkey_patched('os'):
+    if eventlet.patcher.is_monkey_patched('socket'):
         return eventlet.greenio.GreenPipe(fd, *args, **kwargs)
     else:
         return io.open(fd, *args, **kwargs)
