@@ -227,14 +227,6 @@ class ForkingClientChannel(_ClientChannel):
 
         sock_a, sock_b = socket.socketpair()
 
-        # Python bug workaround.  It seems socketpair sockets aren't
-        # wrapped in the same way as socket.socket return values are.  The
-        # unwrapped socket object in py27 contains a broken .makefile
-        # implementation (tries to seek).
-        if not isinstance(sock_a, socket.SocketType):
-            sock_a = socket.SocketType(_sock=sock_a)
-            sock_b = socket.SocketType(_sock=sock_b)
-
         for s in (sock_a, sock_b):
             s.setblocking(True)
             # Important that these sockets don't get leaked
