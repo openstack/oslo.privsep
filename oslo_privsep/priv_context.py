@@ -16,13 +16,14 @@
 import enum
 import functools
 import logging
+import sys
 
 from oslo_config import cfg
 from oslo_config import types
 
 from oslo_privsep import capabilities
 from oslo_privsep import daemon
-from oslo_privsep._i18n import _, _LW
+from oslo_privsep._i18n import _, _LW, _LE
 
 
 LOG = logging.getLogger(__name__)
@@ -81,7 +82,11 @@ class PrivContext(object):
         self.pypath = pypath
         self.prefix = prefix
         self.cfg_section = cfg_section
-        self.client_mode = True
+
+        # NOTE(claudiub): oslo.privsep is not currently supported on Windows,
+        # as it uses Linux-specific functionality (os.fork, socker.AF_UNIX).
+        # The client_mode should be set to False on Windows.
+        self.client_mode = sys.platform != 'win32'
         self.channel = None
 
         cfg.CONF.register_opts(OPTS, group=cfg_section)
@@ -99,6 +104,10 @@ class PrivContext(object):
         return 'PrivContext(cfg_section=%s)' % self.cfg_section
 
     def set_client_mode(self, enabled):
+        if enabled and sys.platform == 'win32':
+            raise RuntimeError(
+                _LE("Enabling the client_mode is not currently "
+                    "supported on Windows."))
         self.client_mode = enabled
 
     def entrypoint(self, func):
