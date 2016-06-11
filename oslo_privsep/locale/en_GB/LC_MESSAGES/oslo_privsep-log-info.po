@@ -1,0 +1,41 @@
+# Andi Chandler <andi@gowling.com>, 2016. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: oslo.privsep 1.7.1.dev1\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-06-10 16:43+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2016-06-09 11:13+0000\n"
+"Last-Translator: Andi Chandler <andi@gowling.com>\n"
+"Language-Team: English (United Kingdom)\n"
+"Language: en-GB\n"
+"X-Generator: Zanata 3.7.3\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+
+#, python-format
+msgid "Running privsep helper: %s"
+msgstr "Running privsep helper: %s"
+
+msgid "Spawned new privsep daemon via rootwrap"
+msgstr "Spawned new privsep daemon via rootwrap"
+
+#, python-format
+msgid "privsep daemon running as pid %s"
+msgstr "privsep daemon running as pid %s"
+
+msgid "privsep daemon starting"
+msgstr "privsep daemon starting"
+
+#, python-format
+msgid ""
+"privsep process running with capabilities (eff/prm/inh): %(eff)s/%(prm)s/"
+"%(inh)s"
+msgstr ""
+"privsep process running with capabilities (eff/prm/inh): %(eff)s/%(prm)s/"
+"%(inh)s"
+
+#, python-format
+msgid "privsep process running with uid/gid: %(uid)s/%(gid)s"
+msgstr "privsep process running with uid/gid: %(uid)s/%(gid)s"
