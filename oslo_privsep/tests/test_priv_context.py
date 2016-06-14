@@ -19,6 +19,7 @@ import pipes
 import platform
 import sys
 
+import mock
 import testtools
 
 from oslo_privsep import daemon
@@ -54,6 +55,30 @@ def fail(custom=False):
         raise CustomError(42, 'omg!')
     else:
         raise RuntimeError("I can't let you do that Dave")
+
+
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
+class TestPrivContext(testctx.TestContextTestCase):
+
+    @mock.patch.object(priv_context, 'sys')
+    def test_init_windows(self, mock_sys):
+        mock_sys.platform = 'win32'
+
+        context = priv_context.PrivContext('test', capabilities=[])
+        self.assertFalse(context.client_mode)
+
+    @mock.patch.object(priv_context, 'sys')
+    def test_set_client_mode(self, mock_sys):
+        context = priv_context.PrivContext('test', capabilities=[])
+        self.assertTrue(context.client_mode)
+
+        context.set_client_mode(False)
+        self.assertFalse(context.client_mode)
+
+        # client_mode should remain to False on win32.
+        mock_sys.platform = 'win32'
+        self.assertRaises(RuntimeError, context.set_client_mode, True)
 
 
 @testtools.skipIf(platform.system() != 'Linux',
