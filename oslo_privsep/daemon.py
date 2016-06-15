@@ -49,7 +49,6 @@ import io
 import logging as pylogging
 import os
 import platform
-import shlex
 import socket
 import subprocess
 import sys
@@ -280,7 +279,7 @@ class RootwrapClientChannel(_ClientChannel):
             listen_sock.bind(sockpath)
             listen_sock.listen(1)
 
-            cmd = self._helper_command(context, sockpath)
+            cmd = context.helper_command(sockpath)
             LOG.info(_LI('Running privsep helper: %s'), cmd)
             proc = subprocess.Popen(cmd, shell=False, stderr=_fd_logger())
             if proc.wait() != 0:
@@ -304,51 +303,6 @@ class RootwrapClientChannel(_ClientChannel):
             os.rmdir(tmpdir)
 
         super(RootwrapClientChannel, self).__init__(sock)
-
-    @staticmethod
-    def _helper_command(context, sockpath):
-        # We need to be able to reconstruct the context object in the new
-        # python process we'll get after rootwrap/sudo.  This means we
-        # need to construct the context object and store it somewhere
-        # globally accessible, and then use that python name to find it
-        # again in the new python interpreter.  Yes, it's all a bit
-        # clumsy, and none of it is required when using the fork-based
-        # alternative above.
-        # These asserts here are just attempts to catch errors earlier.
-        # TODO(gus): Consider replacing with setuptools entry_points.
-        assert context.pypath is not None, (
-            'RootwrapClientChannel requires priv_context '
-            'pypath to be specified')
-        assert importutils.import_class(context.pypath) is context, (
-            'RootwrapClientChannel requires priv_context pypath '
-            'for context object')
-
-        # Note order is important here.  Deployments will (hopefully)
-        # have the exact arguments in sudoers/rootwrap configs and
-        # reordering args will break configs!
-
-        if context.conf.helper_command:
-            cmd = shlex.split(context.conf.helper_command)
-        else:
-            cmd = ['sudo', 'privsep-helper']
-
-            try:
-                for cfg_file in cfg.CONF.config_file:
-                    cmd.extend(['--config-file', cfg_file])
-            except cfg.NoSuchOptError:
-                pass
-
-            try:
-                if cfg.CONF.config_dir is not None:
-                    cmd.extend(['--config-dir', cfg.CONF.config_dir])
-            except cfg.NoSuchOptError:
-                pass
-
-        cmd.extend(
-            ['--privsep_context', context.pypath,
-             '--privsep_sock_path', sockpath])
-
-        return cmd
 
 
 class Daemon(object):

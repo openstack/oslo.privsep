@@ -16,10 +16,12 @@
 import enum
 import functools
 import logging
+import shlex
 import sys
 
 from oslo_config import cfg
 from oslo_config import types
+from oslo_utils import importutils
 
 from oslo_privsep import capabilities
 from oslo_privsep import daemon
@@ -57,12 +59,31 @@ OPTS = [
 ]
 
 _ENTRYPOINT_ATTR = 'privsep_entrypoint'
+_HELPER_COMMAND_PREFIX = ['sudo']
 
 
 @enum.unique
 class Method(enum.Enum):
     FORK = 1
     ROOTWRAP = 2
+
+
+def init(root_helper=None):
+    """Initialise oslo.privsep library.
+
+    This function should be called at the top of main(), after the
+    command line is parsed, oslo.config is initialised and logging is
+    set up, but before calling any privileged entrypoint, changing
+    user id, forking, or anything else "odd".
+
+    :param root_helper: List of command and arguments to prefix
+    privsep-helper with, in order to run helper as root.  Note,
+    ignored if context's helper_command config option is set.
+    """
+
+    if root_helper:
+        global _HELPER_COMMAND_PREFIX
+        _HELPER_COMMAND_PREFIX = root_helper
 
 
 class PrivContext(object):
@@ -102,6 +123,50 @@ class PrivContext(object):
 
     def __repr__(self):
         return 'PrivContext(cfg_section=%s)' % self.cfg_section
+
+    def helper_command(self, sockpath):
+        # We need to be able to reconstruct the context object in the new
+        # python process we'll get after rootwrap/sudo.  This means we
+        # need to construct the context object and store it somewhere
+        # globally accessible, and then use that python name to find it
+        # again in the new python interpreter.  Yes, it's all a bit
+        # clumsy, and none of it is required when using the fork-based
+        # alternative above.
+        # These asserts here are just attempts to catch errors earlier.
+        # TODO(gus): Consider replacing with setuptools entry_points.
+        assert self.pypath is not None, (
+            'helper_command requires priv_context '
+            'pypath to be specified')
+        assert importutils.import_class(self.pypath) is self, (
+            'helper_command requires priv_context pypath '
+            'for context object')
+
+        # Note order is important here.  Deployments will (hopefully)
+        # have the exact arguments in sudoers/rootwrap configs and
+        # reordering args will break configs!
+
+        if self.conf.helper_command:
+            cmd = shlex.split(self.conf.helper_command)
+        else:
+            cmd = _HELPER_COMMAND_PREFIX + ['privsep-helper']
+
+            try:
+                for cfg_file in cfg.CONF.config_file:
+                    cmd.extend(['--config-file', cfg_file])
+            except cfg.NoSuchOptError:
+                pass
+
+            try:
+                if cfg.CONF.config_dir is not None:
+                    cmd.extend(['--config-dir', cfg.CONF.config_dir])
+            except cfg.NoSuchOptError:
+                pass
+
+        cmd.extend(
+            ['--privsep_context', self.pypath,
+             '--privsep_sock_path', sockpath])
+
+        return cmd
 
     def set_client_mode(self, enabled):
         if enabled and sys.platform == 'win32':
