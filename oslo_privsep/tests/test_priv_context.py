@@ -59,7 +59,7 @@ def fail(custom=False):
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
-class TestPrivContext(testctx.TestContextTestCase):
+class PrivContextTest(testctx.TestContextTestCase):
 
     @mock.patch.object(priv_context, 'sys')
     def test_init_windows(self, mock_sys):
@@ -126,7 +126,7 @@ class TestPrivContext(testctx.TestContextTestCase):
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
-class TestSeparation(testctx.TestContextTestCase):
+class SeparationTest(testctx.TestContextTestCase):
     def test_getpid(self):
         # Verify that priv_getpid() was executed in another process.
         priv_pid = priv_getpid()
@@ -177,7 +177,7 @@ class RootwrapTest(testctx.TestContextTestCase):
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
-class TestSerialization(testctx.TestContextTestCase):
+class SerializationTest(testctx.TestContextTestCase):
     def test_basic_functionality(self):
         self.assertEqual(43, add1(42))
 

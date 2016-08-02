@@ -63,7 +63,7 @@ class LogTest(testctx.TestContextTestCase):
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
-class TestDaemon(base.BaseTestCase):
+class DaemonTest(base.BaseTestCase):
 
     @mock.patch('os.setuid')
     @mock.patch('os.setgid')
@@ -98,7 +98,7 @@ class TestDaemon(base.BaseTestCase):
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
-class TestWithContext(testctx.TestContextTestCase):
+class WithContextTest(testctx.TestContextTestCase):
 
     def test_unexported(self):
         self.assertRaisesRegexp(
