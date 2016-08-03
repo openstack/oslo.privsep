@@ -67,7 +67,7 @@ from oslo_utils import importutils
 
 from oslo_privsep import capabilities
 from oslo_privsep import comm
-from oslo_privsep._i18n import _, _LE, _LI
+from oslo_privsep._i18n import _, _LE, _LI, _LW
 
 
 LOG = logging.getLogger(__name__)
@@ -95,6 +95,7 @@ class Message(enum.IntEnum):
     CALL = 3
     RET = 4
     ERR = 5
+    LOG = 6
 
 
 class FailedToDropPrivileges(Exception):
@@ -140,6 +141,17 @@ def setgid(group_id_or_name):
             raise FailedToDropPrivileges(msg)
 
 
+class PrivsepLogHandler(pylogging.Handler):
+    def __init__(self, channel):
+        super(PrivsepLogHandler, self).__init__()
+        self.channel = channel
+
+    def emit(self, record):
+        self.channel.send((None, (Message.LOG,
+                                  record.levelno,
+                                  record.getMessage())))
+
+
 class _ClientChannel(comm.ClientChannel):
     """Our protocol, layered on the basic primitives in comm.ClientChannel"""
 
@@ -175,6 +187,14 @@ class _ClientChannel(comm.ClientChannel):
             raise exc_type(*result[2])
         else:
             raise ProtocolError(_('Unexpected response: %r') % result)
+
+    def out_of_band(self, msg):
+        if msg[0] == Message.LOG:
+            # (LOG, level, message)
+            LOG.log(msg[1], msg[2])
+        else:
+            LOG.warn(_LW('Ignoring unexpected OOB message from privileged '
+                         'process: %r'), msg)
 
 
 def fdopen(fd, *args, **kwargs):
@@ -236,16 +256,16 @@ class ForkingClientChannel(_ClientChannel):
         for f in (sys.stdout, sys.stderr):
             f.flush()
 
-        log_fd = _fd_logger()
-
         if os.fork() == 0:
             # child
 
-            # replace root logger early (to capture any errors below)
-            replace_logging(pylogging.StreamHandler(log_fd))
-
+            channel = comm.ServerChannel(sock_b)
             sock_a.close()
-            Daemon(comm.ServerChannel(sock_b), context=context).run()
+
+            # Replace root logger early (to capture any errors during setup)
+            replace_logging(PrivsepLogHandler(channel))
+
+            Daemon(channel, context=context).run()
             LOG.debug('privsep daemon exiting')
             os._exit(0)
 
@@ -435,12 +455,7 @@ def helper_main():
     logging.register_options(cfg.CONF)
 
     cfg.CONF(args=sys.argv[1:], project='privsep')
-    logging.setup(cfg.CONF, 'privsep')
-
-    # We always log to stderr.  Replace the root logger we just set up.
-    replace_logging(pylogging.StreamHandler(sys.stderr))
-
-    LOG.info(_LI('privsep daemon starting'))
+    logging.setup(cfg.CONF, 'privsep')  # note replace_logging call below
 
     context = importutils.import_class(cfg.CONF.privsep_context)
     from oslo_privsep import priv_context   # Avoid circular import
@@ -463,6 +478,11 @@ def helper_main():
     # Note we don't move into a new process group/session like a
     # regular daemon might, since we _want_ to remain associated with
     # the originating (unprivileged) process.
+
+    # Channel is set up now, so move to in-band logging
+    replace_logging(PrivsepLogHandler(channel))
+
+    LOG.info(_LI('privsep daemon starting'))
 
     try:
         Daemon(channel, context).run()

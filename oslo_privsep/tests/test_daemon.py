@@ -13,11 +13,11 @@
 #    under the License.
 
 import fixtures
-import logging
 import mock
 import platform
 import time
 
+from oslo_log import log as logging
 from oslotest import base
 import testtools
 
@@ -35,7 +35,10 @@ def undecorated():
 
 @testctx.context.entrypoint
 def logme(level, msg):
-    LOG.log(level, '%s', msg)
+    # We want to make sure we log everything from the priv side for
+    # the purposes of this test, so force loglevel.
+    LOG.logger.setLevel(logging.DEBUG)
+    LOG.log(level, msg)
 
 
 @testtools.skipIf(platform.system() != 'Linux',
@@ -47,17 +50,14 @@ class LogTest(testctx.TestContextTestCase):
             name=None, level=logging.INFO))
 
     def test_priv_log(self):
+        # These write to the log on the priv side
         logme(logging.DEBUG, u'test@DEBUG')
         logme(logging.WARN, u'test@WARN')
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
-        # TODO(gus): Currently severity information is lost and
-        # everything is logged as INFO.  Fixing this probably requires
-        # writing structured messages to the logging socket.
-        #
-        # self.assertNotIn('test@DEBUG', self.logger.output)
-
+        # self.logger.output is the resulting log on the unpriv side
+        self.assertNotIn(u'test@DEBUG', self.logger.output)
         self.assertIn(u'test@WARN', self.logger.output)
 
 
