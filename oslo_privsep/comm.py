@@ -124,9 +124,12 @@ class ClientChannel(object):
         """This thread owns and demuxes the read channel"""
         for msg in reader:
             msgid, data = msg
-            with self.lock:
-                assert msgid in self.outstanding_msgs
-                self.outstanding_msgs[msgid].set_result(data)
+            if msgid is None:
+                self.out_of_band(data)
+            else:
+                with self.lock:
+                    assert msgid in self.outstanding_msgs
+                    self.outstanding_msgs[msgid].set_result(data)
 
         # EOF.  Perhaps the privileged process exited?
         # Send an IOError to any oustanding waiting readers.  Assuming
@@ -138,6 +141,10 @@ class ClientChannel(object):
         with self.lock:
             for mbox in self.outstanding_msgs.values():
                 mbox.set_exception(exc)
+
+    def out_of_band(self, msg):
+        """Received OOB message. Subclasses might want to override this."""
+        pass
 
     def send_recv(self, msg):
         myid = _get_thread_ident()
