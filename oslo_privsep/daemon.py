@@ -380,8 +380,10 @@ class Daemon(object):
         def fmt_caps(capset):
             if not capset:
                 return 'none'
-            return '|'.join(sorted(capabilities.CAPS_BYVALUE[c]
-                                   for c in capset))
+            fc = [capabilities.CAPS_BYVALUE.get(c, 'CAP_UNDEFINED')
+                  for c in capset]
+            fc.sort()
+            return '|'.join(fc)
 
         eff, prm, inh = capabilities.get_caps()
         LOG.info(
