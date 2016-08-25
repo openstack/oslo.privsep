@@ -142,14 +142,30 @@ def setgid(group_id_or_name):
 
 
 class PrivsepLogHandler(pylogging.Handler):
-    def __init__(self, channel):
+    def __init__(self, channel, processName=None):
         super(PrivsepLogHandler, self).__init__()
         self.channel = channel
+        self.processName = processName
 
     def emit(self, record):
-        self.channel.send((None, (Message.LOG,
-                                  record.levelno,
-                                  record.getMessage())))
+        # Vaguely based on pylogging.handlers.SocketHandler.makePickle
+
+        if self.processName:
+            record.processName = self.processName
+
+        data = dict(record.__dict__)
+
+        if record.exc_info:
+            if not record.exc_text:
+                fmt = self.formatter or pylogging.Formatter()
+                data['exc_text'] = fmt.formatException(record.exc_info)
+            data['exc_info'] = None  # drop traceback in favor of exc_text
+
+        # serialise msg now so we can drop (potentially unserialisable) args
+        data['msg'] = record.getMessage()
+        data['args'] = None
+
+        self.channel.send((None, (Message.LOG, data)))
 
 
 class _ClientChannel(comm.ClientChannel):
@@ -190,8 +206,10 @@ class _ClientChannel(comm.ClientChannel):
 
     def out_of_band(self, msg):
         if msg[0] == Message.LOG:
-            # (LOG, level, message)
-            LOG.log(msg[1], msg[2])
+            # (LOG, LogRecord __dict__)
+            record = pylogging.makeLogRecord(msg[1])
+            if LOG.isEnabledFor(record.levelno):
+                LOG.logger.handle(record)
         else:
             LOG.warn(_LW('Ignoring unexpected OOB message from privileged '
                          'process: %r'), msg)
@@ -263,7 +281,8 @@ class ForkingClientChannel(_ClientChannel):
             sock_a.close()
 
             # Replace root logger early (to capture any errors during setup)
-            replace_logging(PrivsepLogHandler(channel))
+            replace_logging(PrivsepLogHandler(channel,
+                                              processName=str(context)))
 
             Daemon(channel, context=context).run()
             LOG.debug('privsep daemon exiting')

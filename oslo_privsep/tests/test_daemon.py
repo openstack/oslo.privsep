@@ -12,7 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import fixtures
+import functools
+import logging as pylogging
 import mock
 import platform
 import time
@@ -33,12 +36,32 @@ def undecorated():
     pass
 
 
+class TestException(Exception):
+    pass
+
+
 @testctx.context.entrypoint
-def logme(level, msg):
+def logme(level, msg, exc_info=False):
     # We want to make sure we log everything from the priv side for
     # the purposes of this test, so force loglevel.
     LOG.logger.setLevel(logging.DEBUG)
-    LOG.log(level, msg)
+    if exc_info:
+        try:
+            raise TestException('with arg')
+        except TestException:
+            LOG.log(level, msg, exc_info=True)
+    else:
+        LOG.log(level, msg)
+
+
+class LogRecorder(pylogging.Formatter):
+    def __init__(self, logs, *args, **kwargs):
+        super(LogRecorder, self).__init__(*args, **kwargs)
+        self.logs = logs
+
+    def format(self, record):
+        self.logs.append(copy.deepcopy(record))
+        return super(LogRecorder, self).format(record)
 
 
 @testtools.skipIf(platform.system() != 'Linux',
@@ -46,19 +69,46 @@ def logme(level, msg):
 class LogTest(testctx.TestContextTestCase):
     def setUp(self):
         super(LogTest, self).setUp()
-        self.logger = self.useFixture(fixtures.FakeLogger(
-            name=None, level=logging.INFO))
 
-    def test_priv_log(self):
+    def test_priv_loglevel(self):
+        logger = self.useFixture(fixtures.FakeLogger(
+            level=logging.INFO))
+
         # These write to the log on the priv side
         logme(logging.DEBUG, u'test@DEBUG')
         logme(logging.WARN, u'test@WARN')
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
-        # self.logger.output is the resulting log on the unpriv side
-        self.assertNotIn(u'test@DEBUG', self.logger.output)
-        self.assertIn(u'test@WARN', self.logger.output)
+        # logger.output is the resulting log on the unpriv side.
+        # This should have been filtered based on (unpriv) loglevel.
+        self.assertNotIn(u'test@DEBUG', logger.output)
+        self.assertIn(u'test@WARN', logger.output)
+
+    def test_record_data(self):
+        logs = []
+
+        self.useFixture(fixtures.FakeLogger(
+            level=logging.INFO, format='dummy',
+            # fixtures.FakeLogger accepts only a formatter
+            # class/function, not an instance :(
+            formatter=functools.partial(LogRecorder, logs)))
+
+        logme(logging.WARN, u'test with exc', exc_info=True)
+
+        time.sleep(0.1)  # Hack to give logging thread a chance to run
+
+        self.assertEqual(1, len(logs))
+
+        record = logs[0]
+        self.assertIn(u'test with exc', record.getMessage())
+        self.assertEqual(None, record.exc_info)
+        self.assertIn(u'TestException: with arg', record.exc_text)
+        self.assertEqual('PrivContext(cfg_section=privsep)',
+                         record.processName)
+        self.assertIn(u'test_daemon.py', record.exc_text)
+        self.assertEqual(logging.WARN, record.levelno)
+        self.assertEqual('logme', record.funcName)
 
 
 @testtools.skipIf(platform.system() != 'Linux',
