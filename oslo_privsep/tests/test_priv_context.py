@@ -104,7 +104,7 @@ class PrivContextTest(testctx.TestContextTestCase):
 
     def test_helper_command_default_dirtoo(self):
         self.privsep_conf.config_file = ['/bar.conf', '/baz.conf']
-        self.privsep_conf.config_dir = '/foo.d'
+        self.privsep_conf.config_dir = ['/foo.d']
         cmd = testctx.context.helper_command('/tmp/sockpath')
         expected = [
             'sudo', 'privsep-helper',

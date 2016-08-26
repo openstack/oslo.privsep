@@ -158,7 +158,8 @@ class PrivContext(object):
 
             try:
                 if cfg.CONF.config_dir is not None:
-                    cmd.extend(['--config-dir', cfg.CONF.config_dir])
+                    for cfg_dir in cfg.CONF.config_dir:
+                        cmd.extend(['--config-dir', cfg_dir])
             except cfg.NoSuchOptError:
                 pass
 
