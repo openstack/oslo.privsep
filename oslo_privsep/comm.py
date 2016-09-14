@@ -74,10 +74,13 @@ class Deserializer(six.Iterator):
             try:
                 return next(self.unpacker)
             except StopIteration:
-                buf = self.readsock.recv(4096)
-                if not buf:
-                    raise
-                self.unpacker.feed(buf)
+                try:
+                    buf = self.readsock.recv(4096)
+                    if not buf:
+                        raise
+                    self.unpacker.feed(buf)
+                except socket.timeout:
+                    pass
 
 
 class Future(object):
