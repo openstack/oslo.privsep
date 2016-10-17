@@ -193,8 +193,8 @@ class _ClientChannel(comm.ClientChannel):
             # (LOG, level, message)
             LOG.log(msg[1], msg[2])
         else:
-            LOG.warn(_LW('Ignoring unexpected OOB message from privileged '
-                         'process: %r'), msg)
+            LOG.warning(_LW('Ignoring unexpected OOB message from privileged '
+                            'process: %r'), msg)
 
 
 def fdopen(fd, *args, **kwargs):
