@@ -15,4 +15,4 @@
 
 import pbr.version
 
-version_info = pbr.version.VersionInfo('oslo_privsep')
+version_info = pbr.version.VersionInfo('oslo.privsep')
