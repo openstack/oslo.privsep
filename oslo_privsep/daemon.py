@@ -163,7 +163,7 @@ class PrivsepLogHandler(pylogging.Handler):
 
         # serialise msg now so we can drop (potentially unserialisable) args
         data['msg'] = record.getMessage()
-        data['args'] = None
+        data['args'] = ()
 
         self.channel.send((None, (Message.LOG, data)))
 
