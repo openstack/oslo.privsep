@@ -23,9 +23,9 @@ from oslo_config import cfg
 from oslo_config import types
 from oslo_utils import importutils
 
+from oslo_privsep._i18n import _
 from oslo_privsep import capabilities
 from oslo_privsep import daemon
-from oslo_privsep._i18n import _, _LW, _LE
 
 
 LOG = logging.getLogger(__name__)
@@ -172,8 +172,8 @@ class PrivContext(object):
     def set_client_mode(self, enabled):
         if enabled and sys.platform == 'win32':
             raise RuntimeError(
-                _LE("Enabling the client_mode is not currently "
-                    "supported on Windows."))
+                "Enabling the client_mode is not currently "
+                "supported on Windows.")
         self.client_mode = enabled
 
     def entrypoint(self, func):
@@ -208,7 +208,7 @@ class PrivContext(object):
 
     def start(self, method=Method.ROOTWRAP):
         if self.channel is not None:
-            LOG.warning(_LW('privsep daemon already running'))
+            LOG.warning('privsep daemon already running')
             return
 
         if method is Method.ROOTWRAP:

@@ -65,9 +65,9 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from oslo_privsep._i18n import _
 from oslo_privsep import capabilities
 from oslo_privsep import comm
-from oslo_privsep._i18n import _, _LE, _LI, _LW
 
 
 LOG = logging.getLogger(__name__)
@@ -181,8 +181,7 @@ class _ClientChannel(comm.ClientChannel):
             reply = self.send_recv((Message.PING.value,))
             success = reply[0] == Message.PONG
         except Exception as e:
-            LOG.exception(
-                _LE('Error while sending initial PING to privsep: %s'), e)
+            LOG.exception('Error while sending initial PING to privsep: %s', e)
             success = False
         if not success:
             msg = _('Privsep daemon failed to start')
@@ -211,8 +210,8 @@ class _ClientChannel(comm.ClientChannel):
             if LOG.isEnabledFor(record.levelno):
                 LOG.logger.handle(record)
         else:
-            LOG.warning(_LW('Ignoring unexpected OOB message from privileged '
-                            'process: %r'), msg)
+            LOG.warning('Ignoring unexpected OOB message from privileged '
+                        'process: %r', msg)
 
 
 def fdopen(fd, *args, **kwargs):
@@ -319,14 +318,14 @@ class RootwrapClientChannel(_ClientChannel):
             listen_sock.listen(1)
 
             cmd = context.helper_command(sockpath)
-            LOG.info(_LI('Running privsep helper: %s'), cmd)
+            LOG.info('Running privsep helper: %s', cmd)
             proc = subprocess.Popen(cmd, shell=False, stderr=_fd_logger())
             if proc.wait() != 0:
-                msg = (_LE('privsep helper command exited non-zero (%s)') %
+                msg = ('privsep helper command exited non-zero (%s)' %
                        proc.returncode)
                 LOG.critical(msg)
                 raise FailedToDropPrivileges(msg)
-            LOG.info(_LI('Spawned new privsep daemon via rootwrap'))
+            LOG.info('Spawned new privsep daemon via rootwrap')
 
             sock, _addr = listen_sock.accept()
             LOG.debug('Accepted privsep connection to %s', sockpath)
@@ -391,7 +390,7 @@ class Daemon(object):
         finally:
             capabilities.set_keepcaps(False)
 
-        LOG.info(_LI('privsep process running with uid/gid: %(uid)s/%(gid)s'),
+        LOG.info('privsep process running with uid/gid: %(uid)s/%(gid)s',
                  {'uid': os.getuid(), 'gid': os.getgid()})
 
         capabilities.drop_all_caps_except(self.caps, self.caps, [])
@@ -406,8 +405,8 @@ class Daemon(object):
 
         eff, prm, inh = capabilities.get_caps()
         LOG.info(
-            _LI('privsep process running with capabilities '
-                '(eff/prm/inh): %(eff)s/%(prm)s/%(inh)s'),
+            'privsep process running with capabilities '
+            '(eff/prm/inh): %(eff)s/%(prm)s/%(inh)s',
             {
                 'eff': fmt_caps(eff),
                 'prm': fmt_caps(prm),
@@ -433,7 +432,7 @@ class Daemon(object):
 
     def loop(self):
         """Main body of daemon request loop"""
-        LOG.info(_LI('privsep daemon running as pid %s'), os.getpid())
+        LOG.info('privsep daemon running as pid %s', os.getpid())
 
         # We *are* this context now - any calls through it should be
         # executed locally.
@@ -481,8 +480,8 @@ def helper_main():
     context = importutils.import_class(cfg.CONF.privsep_context)
     from oslo_privsep import priv_context   # Avoid circular import
     if not isinstance(context, priv_context.PrivContext):
-        LOG.fatal(_LE('--privsep_context must be the (python) name of a '
-                      'PrivContext object'))
+        LOG.fatal('--privsep_context must be the (python) name of a '
+                  'PrivContext object')
 
     sock = socket.socket(socket.AF_UNIX)
     sock.connect(cfg.CONF.privsep_sock_path)
@@ -503,7 +502,7 @@ def helper_main():
     # Channel is set up now, so move to in-band logging
     replace_logging(PrivsepLogHandler(channel))
 
-    LOG.info(_LI('privsep daemon starting'))
+    LOG.info('privsep daemon starting')
 
     try:
         Daemon(channel, context).run()
