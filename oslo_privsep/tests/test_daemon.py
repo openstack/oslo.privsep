@@ -20,6 +20,7 @@ import mock
 import platform
 import time
 
+from oslo_log import formatters
 from oslo_log import log as logging
 from oslotest import base
 import testtools
@@ -109,6 +110,28 @@ class LogTest(testctx.TestContextTestCase):
         self.assertIn(u'test_daemon.py', record.exc_text)
         self.assertEqual(logging.WARN, record.levelno)
         self.assertEqual('logme', record.funcName)
+
+    def test_format_record(self):
+        logs = []
+
+        self.useFixture(fixtures.FakeLogger(
+            level=logging.INFO, format='dummy',
+            # fixtures.FakeLogger accepts only a formatter
+            # class/function, not an instance :(
+            formatter=functools.partial(LogRecorder, logs)))
+
+        logme(logging.WARN, u'test with exc', exc_info=True)
+
+        time.sleep(0.1)  # Hack to give logging thread a chance to run
+
+        self.assertEqual(1, len(logs))
+
+        record = logs[0]
+        # Verify the log record can be formatted by ContextFormatter
+        fake_config = mock.Mock(
+            logging_default_format_string="NOCTXT: %(message)s")
+        formatter = formatters.ContextFormatter(config=fake_config)
+        formatter.format(record)
 
 
 @testtools.skipIf(platform.system() != 'Linux',
