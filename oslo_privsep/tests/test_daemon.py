@@ -103,7 +103,7 @@ class LogTest(testctx.TestContextTestCase):
 
         record = logs[0]
         self.assertIn(u'test with exc', record.getMessage())
-        self.assertEqual(None, record.exc_info)
+        self.assertIsNone(record.exc_info)
         self.assertIn(u'TestException: with arg', record.exc_text)
         self.assertEqual('PrivContext(cfg_section=privsep)',
                          record.processName)
