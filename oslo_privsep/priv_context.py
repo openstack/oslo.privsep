@@ -77,8 +77,8 @@ def init(root_helper=None):
     user id, forking, or anything else "odd".
 
     :param root_helper: List of command and arguments to prefix
-    privsep-helper with, in order to run helper as root.  Note,
-    ignored if context's helper_command config option is set.
+        privsep-helper with, in order to run helper as root.  Note,
+        ignored if context's helper_command config option is set.
     """
 
     if root_helper:
