@@ -10,11 +10,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   installation
-   api
-   usage
-   contributing
-   history
+   install/index
+   user/index
+   contributor/index
+   reference/index
 
 Indices and tables
 ==================
