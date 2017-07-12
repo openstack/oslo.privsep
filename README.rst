@@ -28,9 +28,9 @@ a good idea please read over the `principle of least privilege`_ and
 the `specification`_ which created this library.
 
 * Free software: Apache license
-* Documentation: http://docs.openstack.org/developer/oslo.privsep
-* Source: http://git.openstack.org/cgit/openstack/oslo.privsep
-* Bugs: http://bugs.launchpad.net/oslo.privsep
+* Documentation: https://docs.openstack.org/oslo.privsep/latest/
+* Source: https://git.openstack.org/cgit/openstack/oslo.privsep
+* Bugs: https://bugs.launchpad.net/oslo.privsep
 
 .. _principle of least privilege: https://en.wikipedia.org/wiki/\
                                   Principle_of_least_privilege
