@@ -18,6 +18,7 @@ import os
 import pipes
 import platform
 import sys
+import tempfile
 
 import mock
 import testtools
@@ -82,37 +83,40 @@ class PrivContextTest(testctx.TestContextTestCase):
 
     def test_helper_command(self):
         self.privsep_conf.privsep.helper_command = 'foo --bar'
-        cmd = testctx.context.helper_command('/tmp/sockpath')
+        _, temp_path = tempfile.mkstemp()
+        cmd = testctx.context.helper_command(temp_path)
         expected = [
             'foo', '--bar',
             '--privsep_context', testctx.context.pypath,
-            '--privsep_sock_path', '/tmp/sockpath',
+            '--privsep_sock_path', temp_path,
         ]
         self.assertEqual(expected, cmd)
 
     def test_helper_command_default(self):
         self.privsep_conf.config_file = ['/bar.conf']
-        cmd = testctx.context.helper_command('/tmp/sockpath')
+        _, temp_path = tempfile.mkstemp()
+        cmd = testctx.context.helper_command(temp_path)
         expected = [
             'sudo', 'privsep-helper',
             '--config-file', '/bar.conf',
             # --config-dir arg should be skipped
             '--privsep_context', testctx.context.pypath,
-            '--privsep_sock_path', '/tmp/sockpath',
+            '--privsep_sock_path', temp_path,
         ]
         self.assertEqual(expected, cmd)
 
     def test_helper_command_default_dirtoo(self):
         self.privsep_conf.config_file = ['/bar.conf', '/baz.conf']
         self.privsep_conf.config_dir = ['/foo.d']
-        cmd = testctx.context.helper_command('/tmp/sockpath')
+        _, temp_path = tempfile.mkstemp()
+        cmd = testctx.context.helper_command(temp_path)
         expected = [
             'sudo', 'privsep-helper',
             '--config-file', '/bar.conf',
             '--config-file', '/baz.conf',
             '--config-dir', '/foo.d',
             '--privsep_context', testctx.context.pypath,
-            '--privsep_sock_path', '/tmp/sockpath',
+            '--privsep_sock_path', temp_path,
         ]
         self.assertEqual(expected, cmd)
 

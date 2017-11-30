@@ -134,12 +134,12 @@ class PrivContext(object):
         # alternative above.
         # These asserts here are just attempts to catch errors earlier.
         # TODO(gus): Consider replacing with setuptools entry_points.
-        assert self.pypath is not None, (
-            'helper_command requires priv_context '
-            'pypath to be specified')
-        assert importutils.import_class(self.pypath) is self, (
-            'helper_command requires priv_context pypath '
-            'for context object')
+        if self.pypath is None:
+            raise AssertionError('helper_command requires priv_context '
+                                 'pypath to be specified')
+        if importutils.import_class(self.pypath) is not self:
+            raise AssertionError('helper_command requires priv_context '
+                                 'pypath for context object')
 
         # Note order is important here.  Deployments will (hopefully)
         # have the exact arguments in sudoers/rootwrap configs and
@@ -179,16 +179,18 @@ class PrivContext(object):
     def entrypoint(self, func):
         """This is intended to be used as a decorator."""
 
-        assert func.__module__.startswith(self.prefix), (
-            '%r entrypoints must be below "%s"' % (self, self.prefix))
+        if not func.__module__.startswith(self.prefix):
+            raise AssertionError('%r entrypoints must be below "%s"' %
+                                 (self, self.prefix))
 
         # Right now, we only track a single context in
         # _ENTRYPOINT_ATTR.  This could easily be expanded into a set,
         # but that will increase the memory overhead.  Revisit if/when
         # someone has a need to associate the same entrypoint with
         # multiple contexts.
-        assert getattr(func, _ENTRYPOINT_ATTR, None) is None, (
-            '%r is already associated with another PrivContext' % func)
+        if getattr(func, _ENTRYPOINT_ATTR, None) is not None:
+            raise AssertionError('%r is already associated with another '
+                                 'PrivContext' % func)
 
         f = functools.partial(self._wrap, func)
         setattr(f, _ENTRYPOINT_ATTR, self)

@@ -131,7 +131,9 @@ class ClientChannel(object):
                 self.out_of_band(data)
             else:
                 with self.lock:
-                    assert msgid in self.outstanding_msgs
+                    if msgid not in self.outstanding_msgs:
+                        raise AssertionError("msgid should in "
+                                             "outstanding_msgs.")
                     self.outstanding_msgs[msgid].set_result(data)
 
         # EOF.  Perhaps the privileged process exited?
@@ -154,7 +156,8 @@ class ClientChannel(object):
         future = Future(self.lock)
 
         with self.lock:
-            assert myid not in self.outstanding_msgs
+            if myid in self.outstanding_msgs:
+                raise AssertionError("myid shoudn't be in outstanding_msgs.")
             self.outstanding_msgs[myid] = future
             try:
                 self.writer.send((myid, msg))
