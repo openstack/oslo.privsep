@@ -12,63 +12,69 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import enum
 import os
 import platform
+import sys
 
 import cffi
 
-# Generated with:
-# awk '/^#define CAP_[A-Z_]+[ \t]+[0-9]+/ {print $2,"=",$3}' \
-#        include/uapi/linux/capability.h
-# From the 4.11.11 kernel and the kernel git SHA:235b84fc862
-# Will need to be refreshed as new capabilites are added to the kernel
-CAP_CHOWN = 0
-CAP_DAC_OVERRIDE = 1
-CAP_DAC_READ_SEARCH = 2
-CAP_FOWNER = 3
-CAP_FSETID = 4
-CAP_KILL = 5
-CAP_SETGID = 6
-CAP_SETUID = 7
-CAP_SETPCAP = 8
-CAP_LINUX_IMMUTABLE = 9
-CAP_NET_BIND_SERVICE = 10
-CAP_NET_BROADCAST = 11
-CAP_NET_ADMIN = 12
-CAP_NET_RAW = 13
-CAP_IPC_LOCK = 14
-CAP_IPC_OWNER = 15
-CAP_SYS_MODULE = 16
-CAP_SYS_RAWIO = 17
-CAP_SYS_CHROOT = 18
-CAP_SYS_PTRACE = 19
-CAP_SYS_PACCT = 20
-CAP_SYS_ADMIN = 21
-CAP_SYS_BOOT = 22
-CAP_SYS_NICE = 23
-CAP_SYS_RESOURCE = 24
-CAP_SYS_TIME = 25
-CAP_SYS_TTY_CONFIG = 26
-CAP_MKNOD = 27
-CAP_LEASE = 28
-CAP_AUDIT_WRITE = 29
-CAP_AUDIT_CONTROL = 30
-CAP_SETFCAP = 31
-CAP_MAC_OVERRIDE = 32
-CAP_MAC_ADMIN = 33
-CAP_SYSLOG = 34
-CAP_WAKE_ALARM = 35
-CAP_BLOCK_SUSPEND = 36
-CAP_AUDIT_READ = 37
+
+class Capabilities(enum.IntEnum):
+    # Generated with:
+    # awk '/^#define CAP_[A-Z_]+[ \t]+[0-9]+/ {print $2,"=",$3}' \
+    #        include/uapi/linux/capability.h
+    # From the 4.11.11 kernel and the kernel git SHA:235b84fc862
+    # Will need to be refreshed as new capabilites are added to the kernel
+    CAP_CHOWN = 0
+    CAP_DAC_OVERRIDE = 1
+    CAP_DAC_READ_SEARCH = 2
+    CAP_FOWNER = 3
+    CAP_FSETID = 4
+    CAP_KILL = 5
+    CAP_SETGID = 6
+    CAP_SETUID = 7
+    CAP_SETPCAP = 8
+    CAP_LINUX_IMMUTABLE = 9
+    CAP_NET_BIND_SERVICE = 10
+    CAP_NET_BROADCAST = 11
+    CAP_NET_ADMIN = 12
+    CAP_NET_RAW = 13
+    CAP_IPC_LOCK = 14
+    CAP_IPC_OWNER = 15
+    CAP_SYS_MODULE = 16
+    CAP_SYS_RAWIO = 17
+    CAP_SYS_CHROOT = 18
+    CAP_SYS_PTRACE = 19
+    CAP_SYS_PACCT = 20
+    CAP_SYS_ADMIN = 21
+    CAP_SYS_BOOT = 22
+    CAP_SYS_NICE = 23
+    CAP_SYS_RESOURCE = 24
+    CAP_SYS_TIME = 25
+    CAP_SYS_TTY_CONFIG = 26
+    CAP_MKNOD = 27
+    CAP_LEASE = 28
+    CAP_AUDIT_WRITE = 29
+    CAP_AUDIT_CONTROL = 30
+    CAP_SETFCAP = 31
+    CAP_MAC_OVERRIDE = 32
+    CAP_MAC_ADMIN = 33
+    CAP_SYSLOG = 34
+    CAP_WAKE_ALARM = 35
+    CAP_BLOCK_SUSPEND = 36
+    CAP_AUDIT_READ = 37
 
 
-# Convenience dicts for human readable values
 CAPS_BYNAME = {}
 CAPS_BYVALUE = {}
-for k, v in globals().copy().items():
-    if k.startswith('CAP_'):
-        CAPS_BYNAME[k] = v
-        CAPS_BYVALUE[v] = k
+module = sys.modules[__name__]
+# Convenience dicts for human readable values
+# module attributes for backwards compat/convenience
+for c in Capabilities:
+    CAPS_BYNAME[c.name] = c.value
+    CAPS_BYVALUE[c.value] = c.name
+    setattr(module, c.name, c.value)
 
 CDEF = '''
 /* Edited highlights from `echo '#include <sys/capability.h>' | gcc -E -` */
