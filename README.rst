@@ -12,11 +12,11 @@ oslo.privsep
 ============
 
 .. image:: https://img.shields.io/pypi/v/oslo.privsep.svg
-    :target: https://pypi.python.org/pypi/oslo.privsep/
+    :target: https://pypi.org/project/oslo.privsep/
     :alt: Latest Version
 
 .. image:: https://img.shields.io/pypi/dm/oslo.privsep.svg
-    :target: https://pypi.python.org/pypi/oslo.privsep/
+    :target: https://pypi.org/project/oslo.privsep/
     :alt: Downloads
 
 OpenStack library for privilege separation
