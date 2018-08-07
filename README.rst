@@ -15,10 +15,6 @@ oslo.privsep
     :target: https://pypi.org/project/oslo.privsep/
     :alt: Latest Version
 
-.. image:: https://img.shields.io/pypi/dm/oslo.privsep.svg
-    :target: https://pypi.org/project/oslo.privsep/
-    :alt: Downloads
-
 OpenStack library for privilege separation
 
 This library helps applications perform actions which require more or
