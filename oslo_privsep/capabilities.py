@@ -108,13 +108,13 @@ int prctl (int __option, ...);
 '''
 
 ffi = cffi.FFI()
-crt = ffi.dlopen(None)
 ffi.cdef(CDEF)
 
 
 if platform.system() == 'Linux':
     # mock.patching crt.* directly seems to upset cffi.  Use an
     # indirection point here for easier testing.
+    crt = ffi.dlopen(None)
     _prctl = crt.prctl
     _capget = crt.capget
     _capset = crt.capset
