@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Privsep now uses multithreading to allow concurrency in executing
+    privileged commands. The number of concurrent threads defaults to the
+    available CPU cores, but can be adjusted by the new ``thread_pool_size``
+    config option.

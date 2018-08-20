@@ -149,6 +149,7 @@ class DaemonTest(base.BaseTestCase):
         context = mock.NonCallableMock()
         context.conf.user = 42
         context.conf.group = 84
+        context.conf.thread_pool_size = 10
         context.conf.capabilities = [
             capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN]
 
