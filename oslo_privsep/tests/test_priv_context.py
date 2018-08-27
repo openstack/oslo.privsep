@@ -186,7 +186,7 @@ class SerializationTest(testctx.TestContextTestCase):
         self.assertEqual(43, add1(42))
 
     def test_raises_standard(self):
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             RuntimeError, "I can't let you do that Dave", fail)
 
     def test_raises_custom(self):

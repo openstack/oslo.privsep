@@ -174,6 +174,6 @@ class DaemonTest(base.BaseTestCase):
 class WithContextTest(testctx.TestContextTestCase):
 
     def test_unexported(self):
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             NameError, 'undecorated not exported',
             testctx.context._wrap, undecorated)
