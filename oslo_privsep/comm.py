@@ -51,7 +51,8 @@ class Serializer(object):
         self.writesock = writesock
 
     def send(self, msg):
-        buf = msgpack.packb(msg, use_bin_type=True)
+        buf = msgpack.packb(msg, use_bin_type=True,
+                            unicode_errors='surrogateescape')
         self.writesock.sendall(buf)
 
     def close(self):
@@ -64,7 +65,8 @@ class Serializer(object):
 class Deserializer(six.Iterator):
     def __init__(self, readsock):
         self.readsock = readsock
-        self.unpacker = msgpack.Unpacker(use_list=False, encoding='utf-8')
+        self.unpacker = msgpack.Unpacker(use_list=False, encoding='utf-8',
+                                         unicode_errors='surrogateescape')
 
     def __iter__(self):
         return self

@@ -72,7 +72,7 @@ class TestSerialization(base.BaseTestCase):
         self.assertSendable(data)
 
     def test_unicode(self):
-        data = u'\u4e09\u9df9'
+        data = u'\u4e09\u9df9\udc82'
         self.assertSendable(data)
 
     def test_tuple(self):
