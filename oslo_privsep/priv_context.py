@@ -16,6 +16,7 @@
 import enum
 import functools
 import logging
+import multiprocessing
 import shlex
 import sys
 
@@ -48,6 +49,12 @@ OPTS = [
             type=types.List(CapNameOrInt), default=[],
             help=_('List of Linux capabilities retained by the privsep '
                    'daemon.')),
+    cfg.IntOpt('thread_pool_size',
+               min=1,
+               help=_("The number of threads available for privsep to "
+                      "concurrently run processes. Defaults to the number of "
+                      "CPU cores in the system."),
+               default=multiprocessing.cpu_count()),
     cfg.StrOpt('helper_command',
                help=_('Command to invoke to start the privsep daemon if '
                       'not using the "fork" method. '
