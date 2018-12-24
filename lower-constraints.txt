@@ -11,6 +11,7 @@ eventlet==0.18.2
 extras==1.0.0
 fixtures==3.0.0
 flake8==2.5.5
+futures==3.1.1;python_version=='2.7' or python_version=='2.6' # PSF
 gitdb==0.6.4
 GitPython==1.0.1
 greenlet==0.4.10
