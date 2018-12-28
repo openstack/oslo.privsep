@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-'''Privilege separation ("privsep") daemon.
+"""Privilege separation ("privsep") daemon.
 
 To ease transition this supports 2 alternative methods of starting the
 daemon, all resulting in a helper process running with elevated
@@ -41,7 +41,7 @@ privileges and open socket(s) to the original process:
 The privsep daemon exits when the communication channel is closed,
 (which usually occurs when the unprivileged process exits).
 
-'''
+"""
 
 from concurrent import futures
 import enum
@@ -56,11 +56,6 @@ import sys
 import tempfile
 import threading
 
-if platform.system() == 'Linux':
-    import fcntl
-    import grp
-    import pwd
-
 import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -71,6 +66,10 @@ from oslo_privsep._i18n import _
 from oslo_privsep import capabilities
 from oslo_privsep import comm
 
+if platform.system() == 'Linux':
+    import fcntl
+    import grp
+    import pwd
 
 LOG = logging.getLogger(__name__)
 
