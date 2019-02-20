@@ -23,9 +23,11 @@ import time
 from oslo_log import formatters
 from oslo_log import log as logging
 from oslotest import base
+import six
 import testtools
 
 from oslo_privsep import capabilities
+from oslo_privsep import comm
 from oslo_privsep import daemon
 from oslo_privsep.tests import testctx
 
@@ -178,3 +180,35 @@ class WithContextTest(testctx.TestContextTestCase):
         self.assertRaisesRegex(
             NameError, 'undecorated not exported',
             testctx.context._wrap, undecorated)
+
+
+class ClientChannelTestCase(base.BaseTestCase):
+
+    DICT = {
+        'string_1': ('tuple_1', six.b('tuple_2')),
+        six.b('byte_1'): ['list_1', 'list_2'],
+    }
+
+    EXPECTED = {
+        'string_1': ('tuple_1', six.b('tuple_2')),
+        'byte_1': ['list_1', 'list_2'],
+    }
+
+    def setUp(self):
+        super(ClientChannelTestCase, self).setUp()
+        with mock.patch.object(comm.ClientChannel, '__init__'), \
+                mock.patch.object(daemon._ClientChannel, 'exchange_ping'):
+            self.client_channel = daemon._ClientChannel(mock.ANY)
+
+    def test_out_of_band_log_message(self):
+        message = [daemon.Message.LOG, self.DICT]
+        with mock.patch.object(pylogging, 'makeLogRecord') as mock_make_log, \
+                mock.patch.object(daemon.LOG, 'isEnabledFor',
+                                  return_value=False):
+            self.client_channel.out_of_band(message)
+            mock_make_log.assert_called_once_with(self.EXPECTED)
+
+    def test_out_of_band_not_log_message(self):
+        with mock.patch.object(daemon.LOG, 'warning') as mock_warning:
+            self.client_channel.out_of_band([daemon.Message.PING])
+            mock_warning.assert_called_once()

@@ -59,6 +59,7 @@ import threading
 import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 from oslo_utils import importutils
 import six
 
@@ -207,7 +208,9 @@ class _ClientChannel(comm.ClientChannel):
     def out_of_band(self, msg):
         if msg[0] == Message.LOG:
             # (LOG, LogRecord __dict__)
-            record = pylogging.makeLogRecord(msg[1])
+            message = {encodeutils.safe_decode(k): v
+                       for k, v in msg[1].items()}
+            record = pylogging.makeLogRecord(message)
             if LOG.isEnabledFor(record.levelno):
                 LOG.logger.handle(record)
         else:
