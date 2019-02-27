@@ -54,7 +54,8 @@ OPTS = [
                help=_("The number of threads available for privsep to "
                       "concurrently run processes. Defaults to the number of "
                       "CPU cores in the system."),
-               default=multiprocessing.cpu_count()),
+               default=multiprocessing.cpu_count(),
+               sample_default='multiprocessing.cpu_count()'),
     cfg.StrOpt('helper_command',
                help=_('Command to invoke to start the privsep daemon if '
                       'not using the "fork" method. '
