@@ -2,7 +2,16 @@
  oslo.privsep
 ==============
 
-OpenStack library for privilege separation
+oslo.privsep is an OpenStack library for privilege separation.
+
+It helps applications perform actions which require more or less
+privileges than they were started with in a safe, easy to code
+and easy to use manner. For more information on why this is generally
+a good idea please read over the `principle of least privilege`_ and
+the `specification`_ which created this library.
+
+.. _principle of least privilege: https://en.wikipedia.org/wiki/Principle_of_least_privilege
+.. _specification: https://specs.openstack.org/openstack/oslo-specs/specs/liberty/privsep.html
 
 Contents
 ========
