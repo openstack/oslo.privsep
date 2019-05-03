@@ -25,7 +25,7 @@ the `specification`_ which created this library.
 
 * Free software: Apache license
 * Documentation: https://docs.openstack.org/oslo.privsep/latest/
-* Source: https://git.openstack.org/cgit/openstack/oslo.privsep
+* Source: https://opendev.org/openstack/oslo.privsep
 * Bugs: https://bugs.launchpad.net/oslo.privsep
 * Release Notes: https://docs.openstack.org/releasenotes/oslo.privsep
 
