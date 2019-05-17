@@ -504,7 +504,7 @@ class Daemon(object):
                 if error[1].errno == errno.EPIPE:
                     # Write stream closed, exit loop
                     break
-                six.reraise(error)
+                six.reraise(*error)
 
             # Submit the command for execution
             future = self.thread_pool.submit(self._process_cmd, msgid, *msg)
