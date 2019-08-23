@@ -113,6 +113,7 @@ class Future(object):
 
 class ClientChannel(object):
     def __init__(self, sock):
+        self.running = False
         self.writer = Serializer(sock)
         self.lock = threading.Lock()
         self.reader_thread = threading.Thread(
@@ -127,6 +128,8 @@ class ClientChannel(object):
 
     def _reader_main(self, reader):
         """This thread owns and demuxes the read channel"""
+        with self.lock:
+            self.running = True
         for msg in reader:
             msgid, data = msg
             if msgid is None:
@@ -148,6 +151,7 @@ class ClientChannel(object):
         with self.lock:
             for mbox in self.outstanding_msgs.values():
                 mbox.set_exception(exc)
+            self.running = False
 
     def out_of_band(self, msg):
         """Received OOB message. Subclasses might want to override this."""
