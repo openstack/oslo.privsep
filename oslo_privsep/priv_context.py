@@ -237,6 +237,9 @@ class PrivContext(object):
     def _wrap(self, func, *args, **kwargs):
         if self.client_mode:
             name = '%s.%s' % (func.__module__, func.__name__)
+            if self.channel is not None and not self.channel.running:
+                LOG.warning("RESTARTING PrivContext for %s", name)
+                self.stop()
             if self.channel is None:
                 self.start()
             return self.channel.remote_call(name, args, kwargs)
