@@ -1,0 +1,15 @@
+---
+fixes:
+  - |
+    When the privsep helper dies, the client side PrivContext now restarts the
+    client channel and the helper so that privileged commands can continue to
+    be processed. See `bug 1715374`_ for details. In conjunction with the fix
+    for `bug 1794708`_ in oslo.service, the nova-compute service now behaves
+    correctly when  it receives ``SIGHUP``.
+
+    .. note:: This only works for the ``ROOTWRAP`` method of starting the
+              daemon. With the ``FORK`` method we've dropped privileges and no
+              longer have the ability to restart the daemon in privileged mode.
+
+    .. _`bug 1715374`: https://bugs.launchpad.net/nova/+bug/1715374
+    .. _`bug 1794708`: https://bugs.launchpad.net/oslo.service/+bug/1794708
