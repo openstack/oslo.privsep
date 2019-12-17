@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath('../..'))
 # -- General configuration ----------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -23,18 +19,13 @@ sys.path.insert(0, os.path.abspath('../..'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.apidoc',
-    #'sphinx.ext.intersphinx',
-    'openstackdocstheme'
+    'openstackdocstheme',
 ]
 
 # openstackdocstheme options
 repository_name = 'openstack/oslo.privsep'
 bug_project = 'oslo.privsep'
 bug_tag = ''
-
-# autodoc generation is a bit aggressive and a nuisance when doing heavy
-# text edit cycles.
-# execute "export SPHINX_DEBUG=1" in your terminal to disable
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -60,26 +51,13 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-# html_theme_path = ["."]
 html_theme = 'openstackdocs'
-# html_static_path = ['static']
 
-# Output file base name for HTML help builder.
-htmlhelp_basename = '%sdoc' % project
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, documentclass
-# [howto/manual]).
-latex_documents = [
-    ('index',
-     '%s.tex' % project,
-     u'%s Documentation' % project,
-     u'OpenStack Foundation', 'manual'),
-]
-
-# Example configuration for intersphinx: refer to the Python standard library.
-#intersphinx_mapping = {'http://docs.python.org/': None}
 
 # -- sphinxcontrib.apidoc configuration --------------------------------------
+
 apidoc_module_dir = '../../oslo_privsep'
 apidoc_output_dir = 'reference/api'
+apidoc_excluded_paths = [
+    'tests',
+]
