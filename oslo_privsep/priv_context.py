@@ -19,6 +19,7 @@ import logging
 import multiprocessing
 import shlex
 import sys
+import threading
 
 from oslo_config import cfg
 from oslo_config import types
@@ -144,6 +145,7 @@ class PrivContext(object):
         # The client_mode should be set to False on Windows.
         self.client_mode = sys.platform != 'win32'
         self.channel = None
+        self.start_lock = threading.Lock()
 
         cfg.CONF.register_opts(OPTS, group=cfg_section)
         cfg.CONF.set_default('capabilities', group=cfg_section,
@@ -247,18 +249,19 @@ class PrivContext(object):
             return func(*args, **kwargs)
 
     def start(self, method=Method.ROOTWRAP):
-        if self.channel is not None:
-            LOG.warning('privsep daemon already running')
-            return
+        with self.start_lock:
+            if self.channel is not None:
+                LOG.warning('privsep daemon already running')
+                return
 
-        if method is Method.ROOTWRAP:
-            channel = daemon.RootwrapClientChannel(context=self)
-        elif method is Method.FORK:
-            channel = daemon.ForkingClientChannel(context=self)
-        else:
-            raise ValueError('Unknown method: %s' % method)
+            if method is Method.ROOTWRAP:
+                channel = daemon.RootwrapClientChannel(context=self)
+            elif method is Method.FORK:
+                channel = daemon.ForkingClientChannel(context=self)
+            else:
+                raise ValueError('Unknown method: %s' % method)
 
-        self.channel = channel
+            self.channel = channel
 
     def stop(self):
         if self.channel is not None:
