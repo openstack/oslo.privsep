@@ -18,6 +18,7 @@ import functools
 import logging as pylogging
 import mock
 import platform
+import sys
 import time
 
 from oslo_log import formatters
@@ -59,6 +60,8 @@ def logme(level, msg, exc_info=False):
 
 class LogRecorder(pylogging.Formatter):
     def __init__(self, logs, *args, **kwargs):
+        if sys.version_info >= (3, 8):
+            kwargs['validate'] = False
         super(LogRecorder, self).__init__(*args, **kwargs)
         self.logs = logs
 
