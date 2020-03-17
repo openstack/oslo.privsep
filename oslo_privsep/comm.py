@@ -65,8 +65,22 @@ class Serializer(object):
 class Deserializer(six.Iterator):
     def __init__(self, readsock):
         self.readsock = readsock
-        self.unpacker = msgpack.Unpacker(use_list=False, encoding='utf-8',
-                                         unicode_errors='surrogateescape')
+        # (hberaud): Sometime msgpack's versions are not properly aligned with
+        # constraints and we need to stay compat with the available version.
+        # By example 1.0.0 dropped the encoding param but previous
+        # version doesn't define the raw params too.
+        # So here we use the right signature which fit our needs.
+        try:
+            self.unpacker = msgpack.Unpacker(
+                use_list=False,
+                encoding='utf-8',
+                unicode_errors='surrogateescape')
+        except TypeError:
+            self.unpacker = msgpack.Unpacker(
+                use_list=False,
+                raw=False,
+                strict_map_key=False,
+                unicode_errors='surrogateescape')
 
     def __iter__(self):
         return self
