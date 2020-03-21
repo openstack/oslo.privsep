@@ -127,6 +127,16 @@ class PrivContextTest(testctx.TestContextTestCase):
         self.assertEqual(testctx.context.helper_command('/sock')[:3],
                          ['sudo', 'rootwrap', 'privsep-helper'])
 
+    def test_start_acquires_lock(self):
+        context = priv_context.PrivContext('test', capabilities=[])
+        context.channel = "something not None"
+        context.start_lock = mock.Mock()
+        context.start_lock.__enter__ = mock.Mock()
+        context.start_lock.__exit__ = mock.Mock()
+        self.assertFalse(context.start_lock.__enter__.called)
+        context.start()
+        self.assertTrue(context.start_lock.__enter__.called)
+
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
