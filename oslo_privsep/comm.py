@@ -65,7 +65,8 @@ class Serializer(object):
 class Deserializer(six.Iterator):
     def __init__(self, readsock):
         self.readsock = readsock
-        self.unpacker = msgpack.Unpacker(use_list=False, encoding='utf-8',
+        self.unpacker = msgpack.Unpacker(use_list=False, raw=False,
+                                         strict_map_key=False,
                                          unicode_errors='surrogateescape')
 
     def __iter__(self):
