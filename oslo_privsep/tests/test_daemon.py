@@ -16,10 +16,10 @@ import copy
 import fixtures
 import functools
 import logging as pylogging
-import mock
 import platform
 import sys
 import time
+from unittest import mock
 
 from oslo_log import formatters
 from oslo_log import log as logging
