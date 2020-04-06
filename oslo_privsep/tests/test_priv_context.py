@@ -19,8 +19,8 @@ import pipes
 import platform
 import sys
 import tempfile
+from unittest import mock
 
-import mock
 import testtools
 
 from oslo_privsep import daemon
