@@ -24,6 +24,13 @@ Contents
    contributor/index
    reference/index
 
+Release Notes
+=============
+
+Read also the `oslo.privsep Release Notes
+<https://docs.openstack.org/releasenotes/oslo.privsep/>`_.
+
+
 Indices and tables
 ==================
 
