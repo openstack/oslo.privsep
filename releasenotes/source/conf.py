@@ -40,9 +40,9 @@ extensions = [
 ]
 
 # openstackdocstheme options
-repository_name = 'openstack/oslo.privsep'
-bug_project = 'oslo.privsep'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/oslo.privsep'
+openstackdocs_bug_project = 'oslo.privsep'
+openstackdocs_bug_tag = ''
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

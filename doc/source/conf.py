@@ -23,9 +23,9 @@ extensions = [
 ]
 
 # openstackdocstheme options
-repository_name = 'openstack/oslo.privsep'
-bug_project = 'oslo.privsep'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/oslo.privsep'
+openstackdocs_bug_project = 'oslo.privsep'
+openstackdocs_bug_tag = ''
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -34,7 +34,6 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'oslo.privsep'
 copyright = u'2014, OpenStack Foundation'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
