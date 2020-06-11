@@ -34,7 +34,7 @@ class TestCapabilities(base.BaseTestCase):
         # Disappointingly, ffi.cast(type, 1) != ffi.cast(type, 1)
         # so can't just use assert_called_once_with :-(
         self.assertEqual(1, mock_prctl.call_count)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             [8, 1],  # [PR_SET_KEEPCAPS, true]
             [int(x) for x in mock_prctl.call_args[0]])
 
@@ -81,7 +81,7 @@ class TestCapabilities(base.BaseTestCase):
             return 0
         mock_capget.side_effect = impl
 
-        self.assertItemsEqual(
+        self.assertCountEqual(
             ([17, 24, 49],
              [8, 10, 35, 56],
              [24, 31, 40]),

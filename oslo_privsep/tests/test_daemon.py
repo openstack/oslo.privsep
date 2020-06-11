@@ -165,7 +165,7 @@ class DaemonTest(base.BaseTestCase):
         mock_setgid.assert_called_once_with(84)
         mock_setgroups.assert_called_once_with([])
 
-        self.assertItemsEqual(
+        self.assertCountEqual(
             [mock.call(True), mock.call(False)],
             mock_keepcaps.mock_calls)
 
