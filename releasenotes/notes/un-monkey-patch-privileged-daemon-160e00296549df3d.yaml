@@ -1,0 +1,11 @@
+---
+other:
+  - |
+    The ``oslo.privsep`` client can be called from a program using eventlet.
+    If ``eventlet.monkey_patch``, some libraries will be patched, for example
+    ``threading`` or ``os``. When the root daemon is forked from the client
+    process, those libraries remain patched. Now, when the daemon is forked
+    from the client process, those libraries and methods are restored to the
+    original values. The goal is to prevent some timeouts when using eventlet
+    threads (user threads); system threads are preemptive and the code does
+    not need to care about the executor token.

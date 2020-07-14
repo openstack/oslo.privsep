@@ -57,6 +57,7 @@ import tempfile
 import threading
 
 import eventlet
+from eventlet import patcher
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
@@ -73,6 +74,25 @@ if platform.system() == 'Linux':
     import pwd
 
 LOG = logging.getLogger(__name__)
+
+
+EVENTLET_MODULES = ('os', 'select', 'socket', 'thread', 'time', 'MySQLdb',
+                    'builtins', 'subprocess')
+EVENTLET_LIBRARIES = []
+
+
+def _null():
+    return []
+
+
+for module in EVENTLET_MODULES:
+    if hasattr(patcher, '_green_%s_modules' % module):
+        method = getattr(patcher, '_green_%s_modules' % module)
+    elif hasattr(patcher, '_green_%s' % module):
+        method = getattr(patcher, '_green_%s' % module)
+    else:
+        method = _null()
+    EVENTLET_LIBRARIES.append((module, method))
 
 
 @enum.unique
@@ -258,6 +278,21 @@ def replace_logging(handler, log_root=None):
     log_root.addHandler(handler)
 
 
+def un_monkey_patch():
+    for eventlet_mod_name, func_modules in EVENTLET_LIBRARIES:
+        if not eventlet.patcher.is_monkey_patched(eventlet_mod_name):
+            continue
+
+        for name, mod in func_modules():
+            patched_mod = sys.modules.get(name)
+            orig_mod = eventlet.patcher.original(name)
+            for attr_name in mod.__patched__:
+                patched_attr = getattr(mod, attr_name, None)
+                unpatched_attr = getattr(orig_mod, attr_name, None)
+                if patched_attr is not None:
+                    setattr(patched_mod, attr_name, unpatched_attr)
+
+
 class ForkingClientChannel(_ClientChannel):
     def __init__(self, context):
         """Start privsep daemon using fork()
@@ -279,6 +314,7 @@ class ForkingClientChannel(_ClientChannel):
 
         if os.fork() == 0:
             # child
+            un_monkey_patch()
 
             channel = comm.ServerChannel(sock_b)
             sock_a.close()

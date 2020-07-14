@@ -13,11 +13,13 @@
 #    under the License.
 
 import copy
+import eventlet
 import fixtures
 import functools
 import logging as pylogging
 import mock
 import platform
+import sys
 import time
 
 from oslo_log import formatters
@@ -212,3 +214,31 @@ class ClientChannelTestCase(base.BaseTestCase):
         with mock.patch.object(daemon.LOG, 'warning') as mock_warning:
             self.client_channel.out_of_band([daemon.Message.PING])
             mock_warning.assert_called_once()
+
+
+class UnMonkeyPatch(base.BaseTestCase):
+
+    @testtools.skipIf(sys.version_info < (3, 0), 'works only with python 3')
+    def test_un_monkey_patch(self):
+        self.assertFalse(any(
+            eventlet.patcher.is_monkey_patched(eventlet_mod_name)
+            for eventlet_mod_name in daemon.EVENTLET_MODULES))
+
+        eventlet.monkey_patch()
+        self.assertTrue(any(
+            eventlet.patcher.is_monkey_patched(eventlet_mod_name)
+            for eventlet_mod_name in daemon.EVENTLET_MODULES))
+
+        daemon.un_monkey_patch()
+        for eventlet_mod_name, func_modules in daemon.EVENTLET_LIBRARIES:
+            if not eventlet.patcher.is_monkey_patched(eventlet_mod_name):
+                continue
+
+            for name, green_mod in func_modules():
+                orig_mod = eventlet.patcher.original(name)
+                patched_mod = sys.modules.get(name)
+                for attr_name in green_mod.__patched__:
+                    un_monkey_patched_attr = getattr(patched_mod, attr_name,
+                                                     None)
+                    original_attr = getattr(orig_mod, attr_name, None)
+                    self.assertEqual(un_monkey_patched_attr, original_attr)
