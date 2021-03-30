@@ -45,6 +45,20 @@ class TestException(Exception):
     pass
 
 
+def get_fake_context(conf_attrs=None, **context_attrs):
+    conf_attrs = conf_attrs or {}
+    context = mock.NonCallableMock()
+    context.conf.user = 42
+    context.conf.group = 84
+    context.conf.thread_pool_size = 10
+    context.conf.capabilities = [
+        capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN]
+    context.conf.logger_name = 'oslo_privsep.daemon'
+    vars(context).update(context_attrs)
+    vars(context.conf).update(conf_attrs)
+    return context
+
+
 @testctx.context.entrypoint
 def logme(level, msg, exc_info=False):
     # We want to make sure we log everything from the priv side for
@@ -152,12 +166,7 @@ class DaemonTest(base.BaseTestCase):
     def test_drop_privs(self, mock_dropcaps, mock_keepcaps,
                         mock_setgroups, mock_setgid, mock_setuid):
         channel = mock.NonCallableMock()
-        context = mock.NonCallableMock()
-        context.conf.user = 42
-        context.conf.group = 84
-        context.conf.thread_pool_size = 10
-        context.conf.capabilities = [
-            capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN]
+        context = get_fake_context()
 
         d = daemon.Daemon(channel, context)
         d._drop_privs()
@@ -200,22 +209,50 @@ class ClientChannelTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(ClientChannelTestCase, self).setUp()
+        context = get_fake_context()
         with mock.patch.object(comm.ClientChannel, '__init__'), \
                 mock.patch.object(daemon._ClientChannel, 'exchange_ping'):
-            self.client_channel = daemon._ClientChannel(mock.ANY)
+            self.client_channel = daemon._ClientChannel(mock.ANY, context)
 
-    def test_out_of_band_log_message(self):
+    @mock.patch.object(daemon.LOG.logger, 'handle')
+    def test_out_of_band_log_message(self, handle_mock):
         message = [daemon.Message.LOG, self.DICT]
+        self.assertEqual(self.client_channel.log, daemon.LOG)
         with mock.patch.object(pylogging, 'makeLogRecord') as mock_make_log, \
                 mock.patch.object(daemon.LOG, 'isEnabledFor',
-                                  return_value=False):
+                                  return_value=True) as mock_enabled:
             self.client_channel.out_of_band(message)
             mock_make_log.assert_called_once_with(self.EXPECTED)
+            handle_mock.assert_called_once_with(mock_make_log.return_value)
+            mock_enabled.assert_called_once_with(
+                mock_make_log.return_value.levelno)
 
     def test_out_of_band_not_log_message(self):
         with mock.patch.object(daemon.LOG, 'warning') as mock_warning:
             self.client_channel.out_of_band([daemon.Message.PING])
             mock_warning.assert_called_once()
+
+    @mock.patch.object(daemon.logging, 'getLogger')
+    @mock.patch.object(pylogging, 'makeLogRecord')
+    def test_out_of_band_log_message_context_logger(self, make_log_mock,
+                                                    get_logger_mock):
+        logger_name = 'os_brick.privileged'
+        context = get_fake_context(conf_attrs={'logger_name': logger_name})
+        with mock.patch.object(comm.ClientChannel, '__init__'), \
+                mock.patch.object(daemon._ClientChannel, 'exchange_ping'):
+            channel = daemon._ClientChannel(mock.ANY, context)
+
+        get_logger_mock.assert_called_once_with(logger_name)
+        self.assertEqual(get_logger_mock.return_value, channel.log)
+
+        message = [daemon.Message.LOG, self.DICT]
+        channel.out_of_band(message)
+
+        make_log_mock.assert_called_once_with(self.EXPECTED)
+        channel.log.isEnabledFor.assert_called_once_with(
+            make_log_mock.return_value.levelno)
+        channel.log.logger.handle.assert_called_once_with(
+            make_log_mock.return_value)
 
 
 class UnMonkeyPatch(base.BaseTestCase):
