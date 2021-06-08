@@ -20,6 +20,8 @@ python datatypes.  Msgpack 'raw' is assumed to be a valid utf8 string
 converted to tuples during serialization/deserialization.
 """
 
+import datetime
+import enum
 import logging
 import socket
 import threading
@@ -28,22 +30,24 @@ import msgpack
 import six
 
 from oslo_privsep._i18n import _
-
+from oslo_utils import uuidutils
 
 LOG = logging.getLogger(__name__)
 
 
-try:
-    import greenlet
+@enum.unique
+class Message(enum.IntEnum):
+    """Types of messages sent across the communication channel"""
+    PING = 1
+    PONG = 2
+    CALL = 3
+    RET = 4
+    ERR = 5
+    LOG = 6
 
-    def _get_thread_ident():
-        # This returns something sensible, even if the current thread
-        # isn't a greenthread
-        return id(greenlet.getcurrent())
 
-except ImportError:
-    def _get_thread_ident():
-        return threading.current_thread().ident
+class PrivsepTimeout(Exception):
+    pass
 
 
 class Serializer(object):
@@ -89,10 +93,11 @@ class Deserializer(six.Iterator):
 class Future(object):
     """A very simple object to track the return of a function call"""
 
-    def __init__(self, lock):
+    def __init__(self, lock, timeout=None):
         self.condvar = threading.Condition(lock)
         self.error = None
         self.data = None
+        self.timeout = timeout
 
     def set_result(self, data):
         """Must already be holding lock used in constructor"""
@@ -106,7 +111,16 @@ class Future(object):
 
     def result(self):
         """Must already be holding lock used in constructor"""
-        self.condvar.wait()
+        before = datetime.datetime.now()
+        if not self.condvar.wait(timeout=self.timeout):
+            now = datetime.datetime.now()
+            LOG.warning('Timeout while executing a command, timeout: %s, '
+                        'time elapsed: %s', self.timeout,
+                        (now - before).total_seconds())
+            return (Message.ERR.value,
+                    '%s.%s' % (PrivsepTimeout.__module__,
+                               PrivsepTimeout.__name__),
+                    '')
         if self.error is not None:
             raise self.error
         return self.data
@@ -138,8 +152,9 @@ class ClientChannel(object):
             else:
                 with self.lock:
                     if msgid not in self.outstanding_msgs:
-                        raise AssertionError("msgid should in "
-                                             "outstanding_msgs.")
+                        LOG.warning("msgid should be in oustanding_msgs, it is"
+                                    "possible that timeout is reached!")
+                        continue
                     self.outstanding_msgs[msgid].set_result(data)
 
         # EOF.  Perhaps the privileged process exited?
@@ -158,13 +173,14 @@ class ClientChannel(object):
         """Received OOB message. Subclasses might want to override this."""
         pass
 
-    def send_recv(self, msg):
-        myid = _get_thread_ident()
-        future = Future(self.lock)
+    def send_recv(self, msg, timeout=None):
+        myid = uuidutils.generate_uuid()
+        while myid in self.outstanding_msgs:
+            LOG.warning("myid shoudn't be in outstanding_msgs.")
+            myid = uuidutils.generate_uuid()
+        future = Future(self.lock, timeout)
 
         with self.lock:
-            if myid in self.outstanding_msgs:
-                raise AssertionError("myid shoudn't be in outstanding_msgs.")
             self.outstanding_msgs[myid] = future
             try:
                 self.writer.send((myid, msg))

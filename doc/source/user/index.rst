@@ -30,6 +30,31 @@ defines a sys_admin_pctxt with ``CAP_CHOWN``, ``CAP_DAC_OVERRIDE``,
                     capabilities.CAP_SYS_ADMIN],
   )
 
+Defining a context with timeout
+-------------------------------
+
+It is possible to initialize PrivContext with timeout::
+
+  from oslo_privsep import capabilities
+  from oslo_privsep import priv_context
+
+  dhcp_release_cmd = priv_context.PrivContext(
+      __name__,
+      cfg_section='privsep_dhcp_release',
+      pypath=__name__ + '.dhcp_release_cmd',
+      capabilities=[caps.CAP_SYS_ADMIN,
+                    caps.CAP_NET_ADMIN],
+      timeout=5
+  )
+
+``PrivsepTimeout`` is raised if timeout is reached.
+
+.. warning::
+
+   The daemon (the root process) task won't stop when timeout
+   is reached. That means we'll have less available threads if the related
+   thread never finishes.
+
 Defining a privileged function
 ==============================
 
@@ -51,6 +76,36 @@ generic ``update_file(filename, content)`` was created, it could be used to
 overwrite any file in the filesystem, allowing easy escalation to root
 rights. That would defeat the whole purpose of oslo.privsep.
 
+Defining a privileged function with timeout
+-------------------------------------------
+
+It is possible to use ``entrypoint_with_timeout`` decorator::
+
+  from oslo_privsep import daemon
+
+  from neutron import privileged
+
+  @privileged.default.entrypoint_with_timeout(timeout=5)
+  def get_link_devices(namespace, **kwargs):
+      try:
+          with get_iproute(namespace) as ip:
+              return make_serializable(ip.get_links(**kwargs))
+      except OSError as e:
+          if e.errno == errno.ENOENT:
+              raise NetworkNamespaceNotFound(netns_name=namespace)
+          raise
+      except daemon.FailedToDropPrivileges:
+          raise
+      except daemon.PrivsepTimeout:
+          raise
+
+``PrivsepTimeout`` is raised if timeout is reached.
+
+.. warning::
+
+   The daemon (the root process) task won't stop when timeout
+   is reached. That means we'll have less available threads if the related
+   thread never finishes.
 
 Using a privileged function
 ===========================

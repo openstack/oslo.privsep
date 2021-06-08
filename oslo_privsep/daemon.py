@@ -109,17 +109,6 @@ class StdioFd(enum.IntEnum):
     STDERR = 2
 
 
-@enum.unique
-class Message(enum.IntEnum):
-    """Types of messages sent across the communication channel"""
-    PING = 1
-    PONG = 2
-    CALL = 3
-    RET = 4
-    ERR = 5
-    LOG = 6
-
-
 class FailedToDropPrivileges(Exception):
     pass
 
@@ -187,7 +176,7 @@ class PrivsepLogHandler(pylogging.Handler):
         data['msg'] = record.getMessage()
         data['args'] = ()
 
-        self.channel.send((None, (Message.LOG, data)))
+        self.channel.send((None, (comm.Message.LOG, data)))
 
 
 class _ClientChannel(comm.ClientChannel):
@@ -201,8 +190,8 @@ class _ClientChannel(comm.ClientChannel):
     def exchange_ping(self):
         try:
             # exchange "ready" messages
-            reply = self.send_recv((Message.PING.value,))
-            success = reply[0] == Message.PONG
+            reply = self.send_recv((comm.Message.PING.value,))
+            success = reply[0] == comm.Message.PONG
         except Exception as e:
             self.log.exception('Error while sending initial PING to privsep: '
                                '%s', e)
@@ -212,12 +201,13 @@ class _ClientChannel(comm.ClientChannel):
             self.log.critical(msg)
             raise FailedToDropPrivileges(msg)
 
-    def remote_call(self, name, args, kwargs):
-        result = self.send_recv((Message.CALL.value, name, args, kwargs))
-        if result[0] == Message.RET:
+    def remote_call(self, name, args, kwargs, timeout):
+        result = self.send_recv((comm.Message.CALL.value, name, args, kwargs),
+                                timeout)
+        if result[0] == comm.Message.RET:
             # (RET, return value)
             return result[1]
-        elif result[0] == Message.ERR:
+        elif result[0] == comm.Message.ERR:
             # (ERR, exc_type, args)
             #
             # TODO(gus): see what can be done to preserve traceback
@@ -228,7 +218,7 @@ class _ClientChannel(comm.ClientChannel):
             raise ProtocolError(_('Unexpected response: %r') % result)
 
     def out_of_band(self, msg):
-        if msg[0] == Message.LOG:
+        if msg[0] == comm.Message.LOG:
             # (LOG, LogRecord __dict__)
             message = {encodeutils.safe_decode(k): v
                        for k, v in msg[1].items()}
@@ -470,11 +460,11 @@ class Daemon(object):
         :return: A tuple of the return status, optional call output, and
                  optional error information.
         """
-        if cmd == Message.PING:
-            return (Message.PONG.value,)
+        if cmd == comm.Message.PING:
+            return (comm.Message.PONG.value,)
 
         try:
-            if cmd != Message.CALL:
+            if cmd != comm.Message.CALL:
                 raise ProtocolError(_('Unknown privsep cmd: %s') % cmd)
 
             # Extract the callable and arguments
@@ -485,14 +475,14 @@ class Daemon(object):
                 raise NameError(msg)
 
             ret = func(*f_args, **f_kwargs)
-            return (Message.RET.value, ret)
+            return (comm.Message.RET.value, ret)
         except Exception as e:
             LOG.debug(
                 'privsep: Exception during request[%(msgid)s]: '
                 '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
             cls = e.__class__
             cls_name = '%s.%s' % (cls.__module__, cls.__name__)
-            return (Message.ERR.value, cls_name, e.args)
+            return (comm.Message.ERR.value, cls_name, e.args)
 
     def _create_done_callback(self, msgid):
         """Creates a future callback to receive command execution results.
@@ -520,7 +510,7 @@ class Daemon(object):
                     '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
                 cls = e.__class__
                 cls_name = '%s.%s' % (cls.__module__, cls.__name__)
-                reply = (Message.ERR.value, cls_name, e.args)
+                reply = (comm.Message.ERR.value, cls_name, e.args)
                 try:
                     channel.send((msgid, reply))
                 except IOError:

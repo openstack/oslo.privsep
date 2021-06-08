@@ -216,7 +216,7 @@ class ClientChannelTestCase(base.BaseTestCase):
 
     @mock.patch.object(daemon.LOG.logger, 'handle')
     def test_out_of_band_log_message(self, handle_mock):
-        message = [daemon.Message.LOG, self.DICT]
+        message = [comm.Message.LOG, self.DICT]
         self.assertEqual(self.client_channel.log, daemon.LOG)
         with mock.patch.object(pylogging, 'makeLogRecord') as mock_make_log, \
                 mock.patch.object(daemon.LOG, 'isEnabledFor',
@@ -229,7 +229,7 @@ class ClientChannelTestCase(base.BaseTestCase):
 
     def test_out_of_band_not_log_message(self):
         with mock.patch.object(daemon.LOG, 'warning') as mock_warning:
-            self.client_channel.out_of_band([daemon.Message.PING])
+            self.client_channel.out_of_band([comm.Message.PING])
             mock_warning.assert_called_once()
 
     @mock.patch.object(daemon.logging, 'getLogger')
@@ -245,7 +245,7 @@ class ClientChannelTestCase(base.BaseTestCase):
         get_logger_mock.assert_called_once_with(logger_name)
         self.assertEqual(get_logger_mock.return_value, channel.log)
 
-        message = [daemon.Message.LOG, self.DICT]
+        message = [comm.Message.LOG, self.DICT]
         channel.out_of_band(message)
 
         make_log_mock.assert_called_once_with(self.EXPECTED)

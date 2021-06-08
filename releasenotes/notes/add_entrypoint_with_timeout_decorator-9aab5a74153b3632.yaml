@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Add ``timeout`` as parameter to ``PrivContext`` and add
+    ``entrypoint_with_timeout`` decorator to cover the issues with
+    commands which take random time to finish.
+    ``PrivsepTimeout`` is raised if timeout is reached.
+
+    ``Warning``: The daemon (the root process) task won't stop when timeout
+    is reached. That means we'll have less available threads if the related
+    thread never finishes.

@@ -19,10 +19,12 @@ import pipes
 import platform
 import sys
 import tempfile
+import time
 from unittest import mock
 
 import testtools
 
+from oslo_privsep import comm
 from oslo_privsep import daemon
 from oslo_privsep import priv_context
 from oslo_privsep.tests import testctx
@@ -38,6 +40,12 @@ def priv_getpid():
 @testctx.context.entrypoint
 def add1(arg):
     return arg + 1
+
+
+@testctx.context.entrypoint_with_timeout(0.2)
+def do_some_long(long_timeout=0.4):
+    time.sleep(long_timeout)
+    return 42
 
 
 class CustomError(Exception):
@@ -187,6 +195,16 @@ class RootwrapTest(testctx.TestContextTestCase):
         # Verify that priv_getpid() was executed in another process.
         priv_pid = priv_getpid()
         self.assertNotMyPid(priv_pid)
+
+    def test_long_call_with_timeout(self):
+        self.assertRaises(
+            comm.PrivsepTimeout,
+            do_some_long
+        )
+
+    def test_long_call_within_timeout(self):
+        res = do_some_long(0.001)
+        self.assertEqual(42, res)
 
 
 @testtools.skipIf(platform.system() != 'Linux',

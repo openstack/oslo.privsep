@@ -20,6 +20,7 @@ import unittest
 from oslo_config import fixture as config_fixture
 from oslotest import base
 
+from oslo_privsep import comm
 from oslo_privsep import priv_context
 
 
@@ -30,11 +31,31 @@ test_context = priv_context.PrivContext(
     capabilities=[],
 )
 
+test_context_with_timeout = priv_context.PrivContext(
+    __name__,
+    cfg_section='privsep',
+    pypath=__name__ + '.test_context_with_timeout',
+    capabilities=[],
+    timeout=0.03
+)
+
 
 @test_context.entrypoint
 def sleep():
     # We don't want the daemon to be able to handle these calls too fast.
     time.sleep(.001)
+
+
+@test_context.entrypoint_with_timeout(0.03)
+def sleep_with_timeout(long_timeout=0.04):
+    time.sleep(long_timeout)
+    return 42
+
+
+@test_context_with_timeout.entrypoint
+def sleep_with_t_context(long_timeout=0.04):
+    time.sleep(long_timeout)
+    return 42
 
 
 @test_context.entrypoint
@@ -64,6 +85,28 @@ class TestDaemon(base.BaseTestCase):
             sleep()
         # Make sure the daemon is still working
         self.assertEqual(1, one())
+
+    def test_entrypoint_with_timeout(self):
+        thread_pool_size = self.cfg_fixture.conf.privsep.thread_pool_size
+        for _ in range(thread_pool_size + 1):
+            self.assertRaises(comm.PrivsepTimeout, sleep_with_timeout)
+
+    def test_entrypoint_with_timeout_pass(self):
+        thread_pool_size = self.cfg_fixture.conf.privsep.thread_pool_size
+        for _ in range(thread_pool_size + 1):
+            res = sleep_with_timeout(0.01)
+            self.assertEqual(42, res)
+
+    def test_context_with_timeout(self):
+        thread_pool_size = self.cfg_fixture.conf.privsep.thread_pool_size
+        for _ in range(thread_pool_size + 1):
+            self.assertRaises(comm.PrivsepTimeout, sleep_with_t_context)
+
+    def test_context_with_timeout_pass(self):
+        thread_pool_size = self.cfg_fixture.conf.privsep.thread_pool_size
+        for _ in range(thread_pool_size + 1):
+            res = sleep_with_t_context(0.01)
+            self.assertEqual(42, res)
 
     def test_logging(self):
         logs()

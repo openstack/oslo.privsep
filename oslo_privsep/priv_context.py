@@ -128,7 +128,8 @@ def init(root_helper=None):
 
 class PrivContext(object):
     def __init__(self, prefix, cfg_section='privsep', pypath=None,
-                 capabilities=None, logger_name='oslo_privsep.daemon'):
+                 capabilities=None, logger_name='oslo_privsep.daemon',
+                 timeout=None):
 
         # Note that capabilities=[] means retaining no capabilities
         # and leaves even uid=0 with no powers except being able to
@@ -156,6 +157,7 @@ class PrivContext(object):
                              default=capabilities)
         cfg.CONF.set_default('logger_name', group=cfg_section,
                              default=logger_name)
+        self.timeout = timeout
 
     @property
     def conf(self):
@@ -221,7 +223,22 @@ class PrivContext(object):
 
     def entrypoint(self, func):
         """This is intended to be used as a decorator."""
+        return self._entrypoint(func)
 
+    def entrypoint_with_timeout(self, timeout):
+        """This is intended to be used as a decorator with timeout."""
+
+        def wrap(func):
+
+            @functools.wraps(func)
+            def inner(*args, **kwargs):
+                f = self._entrypoint(func)
+                return f(*args, _wrap_timeout=timeout, **kwargs)
+            setattr(inner, _ENTRYPOINT_ATTR, self)
+            return inner
+        return wrap
+
+    def _entrypoint(self, func):
         if not func.__module__.startswith(self.prefix):
             raise AssertionError('%r entrypoints must be below "%s"' %
                                  (self, self.prefix))
@@ -242,7 +259,7 @@ class PrivContext(object):
     def is_entrypoint(self, func):
         return getattr(func, _ENTRYPOINT_ATTR, None) is self
 
-    def _wrap(self, func, *args, **kwargs):
+    def _wrap(self, func, *args, _wrap_timeout=None, **kwargs):
         if self.client_mode:
             name = '%s.%s' % (func.__module__, func.__name__)
             if self.channel is not None and not self.channel.running:
@@ -250,7 +267,9 @@ class PrivContext(object):
                 self.stop()
             if self.channel is None:
                 self.start()
-            return self.channel.remote_call(name, args, kwargs)
+            r_call_timeout = _wrap_timeout or self.timeout
+            return self.channel.remote_call(name, args, kwargs,
+                                            r_call_timeout)
         else:
             return func(*args, **kwargs)
 
