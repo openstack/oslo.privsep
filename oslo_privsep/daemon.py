@@ -193,7 +193,8 @@ class PrivsepLogHandler(pylogging.Handler):
 class _ClientChannel(comm.ClientChannel):
     """Our protocol, layered on the basic primitives in comm.ClientChannel"""
 
-    def __init__(self, sock):
+    def __init__(self, sock, context):
+        self.log = logging.getLogger(context.conf.logger_name)
         super(_ClientChannel, self).__init__(sock)
         self.exchange_ping()
 
@@ -203,11 +204,12 @@ class _ClientChannel(comm.ClientChannel):
             reply = self.send_recv((Message.PING.value,))
             success = reply[0] == Message.PONG
         except Exception as e:
-            LOG.exception('Error while sending initial PING to privsep: %s', e)
+            self.log.exception('Error while sending initial PING to privsep: '
+                               '%s', e)
             success = False
         if not success:
             msg = _('Privsep daemon failed to start')
-            LOG.critical(msg)
+            self.log.critical(msg)
             raise FailedToDropPrivileges(msg)
 
     def remote_call(self, name, args, kwargs):
@@ -231,11 +233,11 @@ class _ClientChannel(comm.ClientChannel):
             message = {encodeutils.safe_decode(k): v
                        for k, v in msg[1].items()}
             record = pylogging.makeLogRecord(message)
-            if LOG.isEnabledFor(record.levelno):
-                LOG.logger.handle(record)
+            if self.log.isEnabledFor(record.levelno):
+                self.log.logger.handle(record)
         else:
-            LOG.warning('Ignoring unexpected OOB message from privileged '
-                        'process: %r', msg)
+            self.log.warning('Ignoring unexpected OOB message from privileged '
+                             'process: %r', msg)
 
 
 def fdopen(fd, *args, **kwargs):
@@ -330,7 +332,7 @@ class ForkingClientChannel(_ClientChannel):
         # parent
 
         sock_b.close()
-        super(ForkingClientChannel, self).__init__(sock_a)
+        super(ForkingClientChannel, self).__init__(sock_a, context)
 
 
 class RootwrapClientChannel(_ClientChannel):
@@ -380,7 +382,7 @@ class RootwrapClientChannel(_ClientChannel):
                     raise
             os.rmdir(tmpdir)
 
-        super(RootwrapClientChannel, self).__init__(sock)
+        super(RootwrapClientChannel, self).__init__(sock, context)
 
 
 class Daemon(object):

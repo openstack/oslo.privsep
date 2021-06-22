@@ -65,6 +65,10 @@ OPTS = [
                       'recreate the current configuration. '
                       'This command must accept suitable --privsep_context '
                       'and --privsep_sock_path arguments.')),
+    cfg.StrOpt('logger_name',
+               help=_('Logger name to use for this privsep context.  By '
+                      'default all contexts log with oslo_privsep.daemon.'),
+               default='oslo_privsep.daemon'),
 ]
 
 _ENTRYPOINT_ATTR = 'privsep_entrypoint'
@@ -124,7 +128,7 @@ def init(root_helper=None):
 
 class PrivContext(object):
     def __init__(self, prefix, cfg_section='privsep', pypath=None,
-                 capabilities=None):
+                 capabilities=None, logger_name='oslo_privsep.daemon'):
 
         # Note that capabilities=[] means retaining no capabilities
         # and leaves even uid=0 with no powers except being able to
@@ -150,6 +154,8 @@ class PrivContext(object):
         cfg.CONF.register_opts(OPTS, group=cfg_section)
         cfg.CONF.set_default('capabilities', group=cfg_section,
                              default=capabilities)
+        cfg.CONF.set_default('logger_name', group=cfg_section,
+                             default=logger_name)
 
     @property
     def conf(self):

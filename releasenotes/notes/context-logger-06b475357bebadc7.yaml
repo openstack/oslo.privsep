@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    ``PrivContext`` accepts a new string parameter called ``logger_name`` to
+    define the logger we want to use for the daemon logs of this context.
+
+    By default all contexts use ``oslo_privsep.daemon``, but in some cases we
+    may need finer grained log levels, for example nova running in debug mode
+    could log its own privsep calls on INFO level regardless, but leave all
+    libraries' privsep calls, such as os-brick's, to be logged in the normal
+    DEBUG level.
+
+    See `bug 1922052`_.
+
+    .. _`bug 1922052`: https://bugs.launchpad.net/nova/+bug/1922052
