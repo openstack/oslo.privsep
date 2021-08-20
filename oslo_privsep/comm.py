@@ -24,6 +24,7 @@ import datetime
 import enum
 import logging
 import socket
+import sys
 import threading
 
 import msgpack
@@ -186,6 +187,9 @@ class ClientChannel(object):
                 self.writer.send((myid, msg))
 
                 reply = future.result()
+            except Exception:
+                LOG.warning("Unexpected error: {}".format(sys.exc_info()[0]))
+                raise
             finally:
                 del self.outstanding_msgs[myid]
 
