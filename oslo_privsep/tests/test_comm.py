@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
+import io
 
 from oslotest import base
 
@@ -22,7 +22,7 @@ from oslo_privsep import comm
 class BufSock(object):
     def __init__(self):
         self.readpos = 0
-        self.buf = six.BytesIO()
+        self.buf = io.BytesIO()
 
     def recv(self, bufsize):
         if self.buf.closed:

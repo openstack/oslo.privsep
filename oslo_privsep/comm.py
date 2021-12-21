@@ -25,7 +25,6 @@ import socket
 import threading
 
 import msgpack
-import six
 
 from oslo_privsep._i18n import _
 
@@ -62,7 +61,7 @@ class Serializer(object):
         self.writesock.shutdown(socket.SHUT_WR)
 
 
-class Deserializer(six.Iterator):
+class Deserializer(object):
     def __init__(self, readsock):
         self.readsock = readsock
         self.unpacker = msgpack.Unpacker(use_list=False, raw=False,
@@ -182,7 +181,7 @@ class ClientChannel(object):
         self.reader_thread.join()
 
 
-class ServerChannel(six.Iterator):
+class ServerChannel(object):
     """Server-side twin to ClientChannel"""
 
     def __init__(self, sock):

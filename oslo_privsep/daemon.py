@@ -62,7 +62,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 from oslo_utils import importutils
-import six
 
 from oslo_privsep._i18n import _
 from oslo_privsep import capabilities
@@ -521,8 +520,8 @@ class Daemon(object):
                 reply = (Message.ERR.value, cls_name, e.args)
                 try:
                     channel.send((msgid, reply))
-                except IOError:
-                    self.communication_error = sys.exc_info()
+                except IOError as exc:
+                    self.communication_error = exc
 
         return _call_back
 
@@ -537,10 +536,10 @@ class Daemon(object):
         for msgid, msg in self.channel:
             error = self.communication_error
             if error:
-                if error[1].errno == errno.EPIPE:
+                if error.errno == errno.EPIPE:
                     # Write stream closed, exit loop
                     break
-                six.reraise(*error)
+                raise error
 
             # Submit the command for execution
             future = self.thread_pool.submit(self._process_cmd, msgid, *msg)
