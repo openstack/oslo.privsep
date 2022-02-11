@@ -25,7 +25,6 @@ from unittest import mock
 from oslo_log import formatters
 from oslo_log import log as logging
 from oslotest import base
-import six
 import testtools
 
 from oslo_privsep import capabilities
@@ -198,12 +197,12 @@ class WithContextTest(testctx.TestContextTestCase):
 class ClientChannelTestCase(base.BaseTestCase):
 
     DICT = {
-        'string_1': ('tuple_1', six.b('tuple_2')),
-        six.b('byte_1'): ['list_1', 'list_2'],
+        'string_1': ('tuple_1', b'tuple_2'),
+        b'byte_1': ['list_1', 'list_2'],
     }
 
     EXPECTED = {
-        'string_1': ('tuple_1', six.b('tuple_2')),
+        'string_1': ('tuple_1', b'tuple_2'),
         'byte_1': ['list_1', 'list_2'],
     }
 
