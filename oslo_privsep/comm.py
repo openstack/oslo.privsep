@@ -70,10 +70,15 @@ class Serializer(object):
 class Deserializer(six.Iterator):
     def __init__(self, readsock):
         self.readsock = readsock
-        self.unpacker = msgpack.Unpacker(use_list=False, raw=False,
-                                         strict_map_key=False,
-                                         unicode_errors='surrogateescape',
-                                         max_buffer_size=100 * 1024 * 1024)
+        self.unpacker = msgpack.Unpacker(
+            use_list=False,
+            raw=False,
+            strict_map_key=False,
+            unicode_errors='surrogateescape',
+            # msgpack 1.0.0 set this value to 100MiB; raise it here for msgpack
+            # < 1.0.0
+            max_buffer_size=100 * 1024 * 1024,
+        )
 
     def __iter__(self):
         return self
