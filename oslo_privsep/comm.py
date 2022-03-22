@@ -71,7 +71,8 @@ class Deserializer(object):
         self.readsock = readsock
         self.unpacker = msgpack.Unpacker(use_list=False, raw=False,
                                          strict_map_key=False,
-                                         unicode_errors='surrogateescape')
+                                         unicode_errors='surrogateescape',
+                                         max_buffer_size=100 * 1024 * 1024)
 
     def __iter__(self):
         return self
