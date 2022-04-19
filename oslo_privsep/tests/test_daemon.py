@@ -95,15 +95,15 @@ class LogTest(testctx.TestContextTestCase):
             level=logging.INFO))
 
         # These write to the log on the priv side
-        logme(logging.DEBUG, u'test@DEBUG')
-        logme(logging.WARN, u'test@WARN')
+        logme(logging.DEBUG, 'test@DEBUG')
+        logme(logging.WARN, 'test@WARN')
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
         # logger.output is the resulting log on the unpriv side.
         # This should have been filtered based on (unpriv) loglevel.
-        self.assertNotIn(u'test@DEBUG', logger.output)
-        self.assertIn(u'test@WARN', logger.output)
+        self.assertNotIn('test@DEBUG', logger.output)
+        self.assertIn('test@WARN', logger.output)
 
     def test_record_data(self):
         logs = []
@@ -114,19 +114,19 @@ class LogTest(testctx.TestContextTestCase):
             # class/function, not an instance :(
             formatter=functools.partial(LogRecorder, logs)))
 
-        logme(logging.WARN, u'test with exc', exc_info=True)
+        logme(logging.WARN, 'test with exc', exc_info=True)
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
         self.assertEqual(1, len(logs))
 
         record = logs[0]
-        self.assertIn(u'test with exc', record.getMessage())
+        self.assertIn('test with exc', record.getMessage())
         self.assertIsNone(record.exc_info)
-        self.assertIn(u'TestException: with arg', record.exc_text)
+        self.assertIn('TestException: with arg', record.exc_text)
         self.assertEqual('PrivContext(cfg_section=privsep)',
                          record.processName)
-        self.assertIn(u'test_daemon.py', record.exc_text)
+        self.assertIn('test_daemon.py', record.exc_text)
         self.assertEqual(logging.WARN, record.levelno)
         self.assertEqual('logme', record.funcName)
 
@@ -139,7 +139,7 @@ class LogTest(testctx.TestContextTestCase):
             # class/function, not an instance :(
             formatter=functools.partial(LogRecorder, logs)))
 
-        logme(logging.WARN, u'test with exc', exc_info=True)
+        logme(logging.WARN, 'test with exc', exc_info=True)
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 

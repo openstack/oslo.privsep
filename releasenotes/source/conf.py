@@ -59,7 +59,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-copyright = u'2016, oslo.privsep Developers'
+copyright = '2016, oslo.privsep Developers'
 
 # Release notes do not need a version in the title, they span
 # multiple versions.
@@ -199,8 +199,8 @@ htmlhelp_basename = 'oslo.privsepReleaseNotesDoc'
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     ('index', 'oslo.privsepReleaseNotes.tex',
-     u'oslo.privsep Release Notes Documentation',
-     u'oslo.privsep Developers', 'manual'),
+     'oslo.privsep Release Notes Documentation',
+     'oslo.privsep Developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -230,8 +230,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'oslo.privsepReleaseNotes',
-     u'oslo.privsep Release Notes Documentation',
-     [u'oslo.privsep Developers'], 1)
+     'oslo.privsep Release Notes Documentation',
+     ['oslo.privsep Developers'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -245,8 +245,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'oslo.privsepReleaseNotes',
-     u'oslo.privsep Release Notes Documentation',
-     u'oslo.privsep Developers', 'oslo.privsepReleaseNotes',
+     'oslo.privsep Release Notes Documentation',
+     'oslo.privsep Developers', 'oslo.privsepReleaseNotes',
      'OpenStack library for privilege separation.',
      'Miscellaneous'),
 ]
