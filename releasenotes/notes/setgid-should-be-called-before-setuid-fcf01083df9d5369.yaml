@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Fixed the failing setgid call when overriding both uid and gid to non root
