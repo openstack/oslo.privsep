@@ -1,14 +1,15 @@
 # Andi Chandler <andi@gowling.com>, 2017. #zanata
 # Andi Chandler <andi@gowling.com>, 2018. #zanata
+# Andi Chandler <andi@gowling.com>, 2023. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: oslo.privsep Release Notes\n"
+"Project-Id-Version: oslo.privsep\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-02-08 23:11+0000\n"
+"POT-Creation-Date: 2023-05-08 11:10+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2018-02-06 11:25+0000\n"
+"PO-Revision-Date: 2023-06-21 09:00+0000\n"
 "Last-Translator: Andi Chandler <andi@gowling.com>\n"
 "Language-Team: English (United Kingdom)\n"
 "Language: en_GB\n"
@@ -17,6 +18,60 @@ msgstr ""
 
 msgid "1.13.0"
 msgstr "1.13.0"
+
+msgid "1.31.0"
+msgstr "1.31.0"
+
+msgid "1.33.3"
+msgstr "1.33.3"
+
+msgid "1.33.4"
+msgstr "1.33.4"
+
+msgid "2.0.0"
+msgstr "2.0.0"
+
+msgid "2.1.2"
+msgstr "2.1.2"
+
+msgid "2.3.0"
+msgstr "2.3.0"
+
+msgid "2.6.0"
+msgstr "2.6.0"
+
+msgid "2023.1 Series Release Notes"
+msgstr "2023.1 Series Release Notes"
+
+msgid ""
+"Add ``timeout`` as parameter to ``PrivContext`` and add "
+"``entrypoint_with_timeout`` decorator to cover the issues with commands "
+"which take random time to finish. ``PrivsepTimeout`` is raised if timeout is "
+"reached."
+msgstr ""
+"Add ``timeout`` as a parameter to ``PrivContext`` and add "
+"``entrypoint_with_timeout`` decorator to cover the issues with commands "
+"which take random time to finish. ``PrivsepTimeout`` is raised if a timeout "
+"is reached."
+
+msgid "Bug Fixes"
+msgstr "Bug Fixes"
+
+msgid ""
+"By default all contexts use ``oslo_privsep.daemon``, but in some cases we "
+"may need finer grained log levels, for example nova running in debug mode "
+"could log its own privsep calls on INFO level regardless, but leave all "
+"libraries' privsep calls, such as os-brick's, to be logged in the normal "
+"DEBUG level."
+msgstr ""
+"By default all contexts use ``oslo_privsep.daemon``, but in some cases, we "
+"may need finer-grained log levels, for example, Nova running in debug mode "
+"could log its own privsep calls on INFO level regardless, but leave all "
+"libraries' privsep calls, such as os-brick's, to be logged in the normal "
+"DEBUG level."
+
+msgid "New Features"
+msgstr "New Features"
 
 msgid "Newton Series Release Notes"
 msgstr "Newton Series Release Notes"
@@ -30,14 +85,120 @@ msgstr "Other Notes"
 msgid "Pike Series Release Notes"
 msgstr "Pike Series Release Notes"
 
+msgid ""
+"Privsep now uses multithreading to allow concurrency in executing privileged "
+"commands. The number of concurrent threads defaults to the available CPU "
+"cores, but can be adjusted by the new ``thread_pool_size`` config option."
+msgstr ""
+"Privsep now uses multithreading to allow concurrency in executing privileged "
+"commands. The number of concurrent threads defaults to the available CPU "
+"cores but can be adjusted by the new ``thread_pool_size`` config option."
+
 msgid "Queens Series Release Notes"
 msgstr "Queens Series Release Notes"
+
+msgid "Rocky Series Release Notes"
+msgstr "Rocky Series Release Notes"
+
+msgid "See `bug 1922052`_."
+msgstr "See `bug 1922052`_."
+
+msgid "Stein Series Release Notes"
+msgstr "Stein Series Release Notes"
+
+msgid ""
+"Support for Python 2.7 has been dropped. The minimum version of Python now "
+"supported is Python 3.6."
+msgstr ""
+"Support for Python 2.7 has been dropped. The minimum version of Python now "
+"supported is Python 3.6."
 
 msgid "Switch to reno for managing release notes."
 msgstr "Switch to Reno for managing release notes."
 
+msgid ""
+"The ``oslo.privsep`` client can be called from a program using eventlet. If "
+"``eventlet.monkey_patch``, some libraries will be patched, for example "
+"``threading`` or ``os``. When the root daemon is forked from the client "
+"process, those libraries remain patched. Now, when the daemon is forked from "
+"the client process, those libraries and methods are restored to the original "
+"values. The goal is to prevent some timeouts when using eventlet threads "
+"(user threads); system threads are preemptive and the code does not need to "
+"care about the executor token."
+msgstr ""
+"The ``oslo.privsep`` client can be called from a program using eventlet. If "
+"``eventlet.monkey_patch``, some libraries will be patched, for example "
+"``threading`` or ``os``. When the root daemon is forked from the client "
+"process, those libraries remain patched. Now, when the daemon is forked from "
+"the client process, those libraries and methods are restored to the original "
+"values. The goal is to prevent some timeouts when using eventlet threads "
+"(user threads); system threads are preemptive and the code does not need to "
+"care about the executor token."
+
+msgid ""
+"This only works for the ``ROOTWRAP`` method of starting the daemon. With the "
+"``FORK`` method we've dropped privileges and no longer have the ability to "
+"restart the daemon in privileged mode."
+msgstr ""
+"This only works for the ``ROOTWRAP`` method of starting the daemon. With the "
+"``FORK`` method we've dropped privileges and no longer have the ability to "
+"restart the daemon in privileged mode."
+
+msgid "Train Series Release Notes"
+msgstr "Train Series Release Notes"
+
 msgid "Unreleased Release Notes"
 msgstr "Unreleased Release Notes"
+
+msgid "Upgrade Notes"
+msgstr "Upgrade Notes"
+
+msgid "Ussuri Series Release Notes"
+msgstr "Ussuri Series Release Notes"
+
+msgid "Victoria Series Release Notes"
+msgstr "Victoria Series Release Notes"
+
+msgid "Wallaby Series Release Notes"
+msgstr "Wallaby Series Release Notes"
+
+msgid ""
+"When the privsep helper dies, the client side PrivContext now restarts the "
+"client channel and the helper so that privileged commands can continue to be "
+"processed. See `bug 1715374`_ for details. In conjunction with the fix for "
+"`bug 1794708`_ in oslo.service, the nova-compute service now behaves "
+"correctly when  it receives ``SIGHUP``."
+msgstr ""
+"When the privsep helper dies, the client side PrivContext now restarts the "
+"client channel and the helper so that privileged commands can continue to be "
+"processed. See `bug 1715374`_ for details. In conjunction with the fix for "
+"`bug 1794708`_ in oslo.service, the nova-compute service now behaves "
+"correctly when it receives ``SIGHUP``."
+
+msgid "Xena Series Release Notes"
+msgstr "Xena Series Release Notes"
+
+msgid "Yoga Series Release Notes"
+msgstr "Yoga Series Release Notes"
+
+msgid "Zed Series Release Notes"
+msgstr "Zed Series Release Notes"
+
+msgid ""
+"``PrivContext`` accepts a new string parameter called ``logger_name`` to "
+"define the logger we want to use for the daemon logs of this context."
+msgstr ""
+"``PrivContext`` accepts a new string parameter called ``logger_name`` to "
+"define the logger we want to use for the daemon logs of this context."
+
+msgid ""
+"``Warning``: The daemon (the root process) task won't stop when timeout is "
+"reached. That means we'll have less available threads if the related thread "
+"never finishes."
+msgstr ""
+"``Warning``: The daemon (the root process) task won't stop when the timeout "
+"is reached. That means we'll have fewer available threads if the related "
+"thread never finishes."
 
 msgid "oslo.privsep Release Notes"
 msgstr "oslo.privsep Release Notes"
