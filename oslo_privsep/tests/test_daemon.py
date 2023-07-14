@@ -166,12 +166,19 @@ class DaemonTest(base.BaseTestCase):
         channel = mock.NonCallableMock()
         context = get_fake_context()
 
+        manager = mock.Mock()
+        manager.attach_mock(mock_setuid, "setuid")
+        manager.attach_mock(mock_setgid, "setgid")
+        expected_calls = [mock.call.setgid(84), mock.call.setuid(42)]
+
         d = daemon.Daemon(channel, context)
         d._drop_privs()
 
         mock_setuid.assert_called_once_with(42)
         mock_setgid.assert_called_once_with(84)
         mock_setgroups.assert_called_once_with([])
+
+        assert manager.mock_calls == expected_calls
 
         self.assertCountEqual(
             [mock.call(True), mock.call(False)],

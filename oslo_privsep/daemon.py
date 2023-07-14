@@ -414,12 +414,10 @@ class Daemon(object):
                     msg = _('Failed to remove supplemental groups')
                     LOG.critical(msg)
                     raise FailedToDropPrivileges(msg)
+                setgid(self.group)
 
             if self.user is not None:
                 setuid(self.user)
-
-            if self.group is not None:
-                setgid(self.group)
 
         finally:
             capabilities.set_keepcaps(False)
