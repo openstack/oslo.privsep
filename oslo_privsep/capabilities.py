@@ -24,7 +24,7 @@ class Capabilities(enum.IntEnum):
     # Generated with:
     # awk '/^#define CAP_[A-Z_]+[ \t]+[0-9]+/ {print $2,"=",$3}' \
     #        include/uapi/linux/capability.h
-    # From the 4.11.11 kernel and the kernel git SHA:235b84fc862
+    # From the 6.6.6 kernel and the kernel git SHA:0c38b88c3323
     # Will need to be refreshed as new capabilites are added to the kernel
     CAP_CHOWN = 0
     CAP_DAC_OVERRIDE = 1
@@ -64,6 +64,9 @@ class Capabilities(enum.IntEnum):
     CAP_WAKE_ALARM = 35
     CAP_BLOCK_SUSPEND = 36
     CAP_AUDIT_READ = 37
+    CAP_PERFMON = 38
+    CAP_BPF = 39
+    CAP_CHECKPOINT_RESTORE = 40
 
 
 CAPS_BYNAME = {}
