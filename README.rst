@@ -29,7 +29,7 @@ the `specification`_ which created this library.
 * Bugs: https://bugs.launchpad.net/oslo.privsep
 * Release Notes: https://docs.openstack.org/releasenotes/oslo.privsep
 
-.. _principle of least privilege: https://en.wikipedia.org/wiki/\
-                                  Principle_of_least_privilege
-.. _specification: https://specs.openstack.org/openstack/\
-                   oslo-specs/specs/liberty/privsep.html
+.. _principle of least privilege:
+    https://en.wikipedia.org/wiki/Principle_of_least_privilege
+.. _specification:
+    https://specs.openstack.org/openstack/oslo-specs/specs/liberty/privsep.html
