@@ -1,7 +1,7 @@
 [run]
 branch = True
-source = privsep
-omit = privsep/tests/*,privsep/openstack/*
+source = oslo_privsep
+omit = oslo_privsep/tests/*
 
 [report]
 ignore-errors = True
