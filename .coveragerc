@@ -4,4 +4,4 @@ source = oslo_privsep
 omit = oslo_privsep/tests/*
 
 [report]
-ignore-errors = True
+ignore_errors = True
