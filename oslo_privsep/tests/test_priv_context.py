@@ -15,8 +15,8 @@
 
 import logging
 import os
-import pipes
 import platform
+import shlex
 import sys
 import tempfile
 import time
@@ -186,7 +186,7 @@ class RootwrapTest(testctx.TestContextTestCase):
             cmd.append('--debug')
 
         self.privsep_conf.set_override(
-            'helper_command', ' '.join(map(pipes.quote, cmd)),
+            'helper_command', ' '.join(map(shlex.quote, cmd)),
             group=testctx.context.cfg_section)
 
         testctx.context.start(method=priv_context.Method.ROOTWRAP)
