@@ -550,13 +550,7 @@ def helper_main():
 
     cfg.CONF(args=sys.argv[1:], project='privsep')
     # note replace_logging call below
-    try:
-        logging.setup(cfg.CONF, 'privsep', fix_eventlet=False)
-    except TypeError:
-        # NOTE(ralonsoh): in case of using oslo.log<5.0.2, kwarg
-        # "fix_eventlet" won't be defined. Remove this try clause when oslo.log
-        # is bumped.
-        logging.setup(cfg.CONF, 'privsep')
+    logging.setup(cfg.CONF, 'privsep', fix_eventlet=False)
 
     context = importutils.import_class(cfg.CONF.privsep_context)
     from oslo_privsep import priv_context   # Avoid circular import
