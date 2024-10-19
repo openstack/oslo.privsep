@@ -30,7 +30,7 @@ class UnprivilegedPrivsepFixture(fixtures.Fixture):
         self.context = context
 
     def setUp(self):
-        super(UnprivilegedPrivsepFixture, self).setUp()
+        super().setUp()
 
         self.conf = self.useFixture(cfg_fixture.Config()).conf
         self.conf.set_override('capabilities', [],

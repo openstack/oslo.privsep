@@ -126,7 +126,7 @@ def init(root_helper=None):
         _HELPER_COMMAND_PREFIX = root_helper
 
 
-class PrivContext(object):
+class PrivContext:
     def __init__(self, prefix, cfg_section='privsep', pypath=None,
                  capabilities=None, logger_name='oslo_privsep.daemon',
                  timeout=None):
@@ -261,7 +261,7 @@ class PrivContext(object):
 
     def _wrap(self, func, *args, _wrap_timeout=None, **kwargs):
         if self.client_mode:
-            name = '%s.%s' % (func.__module__, func.__name__)
+            name = '{}.{}'.format(func.__module__, func.__name__)
             if self.channel is not None and not self.channel.running:
                 LOG.warning("RESTARTING PrivContext for %s", name)
                 self.stop()

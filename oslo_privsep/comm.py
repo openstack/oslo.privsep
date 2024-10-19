@@ -50,7 +50,7 @@ class PrivsepTimeout(Exception):
     pass
 
 
-class Serializer(object):
+class Serializer:
     def __init__(self, writesock):
         self.writesock = writesock
 
@@ -66,7 +66,7 @@ class Serializer(object):
         self.writesock.shutdown(socket.SHUT_WR)
 
 
-class Deserializer(object):
+class Deserializer:
     def __init__(self, readsock):
         self.readsock = readsock
         self.unpacker = msgpack.Unpacker(
@@ -96,7 +96,7 @@ class Deserializer(object):
                     pass
 
 
-class Future(object):
+class Future:
     """A very simple object to track the return of a function call"""
 
     def __init__(self, lock, timeout=None):
@@ -124,15 +124,15 @@ class Future(object):
                         'time elapsed: %s', self.timeout,
                         (now - before).total_seconds())
             return (Message.ERR.value,
-                    '%s.%s' % (PrivsepTimeout.__module__,
-                               PrivsepTimeout.__name__),
+                    '{}.{}'.format(PrivsepTimeout.__module__,
+                                   PrivsepTimeout.__name__),
                     '')
         if self.error is not None:
             raise self.error
         return self.data
 
 
-class ClientChannel(object):
+class ClientChannel:
     def __init__(self, sock):
         self.running = False
         self.writer = Serializer(sock)
@@ -207,7 +207,7 @@ class ClientChannel(object):
         self.reader_thread.join()
 
 
-class ServerChannel(object):
+class ServerChannel:
     """Server-side twin to ClientChannel"""
 
     def __init__(self, sock):

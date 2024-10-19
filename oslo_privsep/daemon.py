@@ -46,7 +46,6 @@ The privsep daemon exits when the communication channel is closed,
 from concurrent import futures
 import enum
 import errno
-import io
 import logging as pylogging
 import os
 import platform
@@ -153,7 +152,7 @@ def setgid(group_id_or_name):
 
 class PrivsepLogHandler(pylogging.Handler):
     def __init__(self, channel, processName=None):
-        super(PrivsepLogHandler, self).__init__()
+        super().__init__()
         self.channel = channel
         self.processName = processName
 
@@ -183,7 +182,7 @@ class _ClientChannel(comm.ClientChannel):
 
     def __init__(self, sock, context):
         self.log = logging.getLogger(context.conf.logger_name)
-        super(_ClientChannel, self).__init__(sock)
+        super().__init__(sock)
         self.exchange_ping()
 
     def exchange_ping(self):
@@ -239,7 +238,7 @@ def fdopen(fd, *args, **kwargs):
     if eventlet.patcher.is_monkey_patched('socket'):
         return eventlet.greenio.GreenPipe(fd, *args, **kwargs)
     else:
-        return io.open(fd, *args, **kwargs)
+        return open(fd, *args, **kwargs)
 
 
 def _fd_logger(level=logging.WARN):
@@ -321,7 +320,7 @@ class ForkingClientChannel(_ClientChannel):
         # parent
 
         sock_b.close()
-        super(ForkingClientChannel, self).__init__(sock_a, context)
+        super().__init__(sock_a, context)
 
 
 class RootwrapClientChannel(_ClientChannel):
@@ -371,10 +370,10 @@ class RootwrapClientChannel(_ClientChannel):
                     raise
             os.rmdir(tmpdir)
 
-        super(RootwrapClientChannel, self).__init__(sock, context)
+        super().__init__(sock, context)
 
 
-class Daemon(object):
+class Daemon:
     """NB: This doesn't fork() - do that yourself before calling run()"""
 
     def __init__(self, channel, context):
@@ -478,7 +477,7 @@ class Daemon(object):
                 'privsep: Exception during request[%(msgid)s]: '
                 '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
             cls = e.__class__
-            cls_name = '%s.%s' % (cls.__module__, cls.__name__)
+            cls_name = '{}.{}'.format(cls.__module__, cls.__name__)
             return (comm.Message.ERR.value, cls_name, e.args)
 
     def _create_done_callback(self, msgid):
@@ -499,18 +498,18 @@ class Daemon(object):
                 LOG.debug('privsep: reply[%(msgid)s]: %(reply)s',
                           {'msgid': msgid, 'reply': reply})
                 channel.send((msgid, reply))
-            except IOError:
+            except OSError:
                 self.communication_error = sys.exc_info()
             except Exception as e:
                 LOG.debug(
                     'privsep: Exception during request[%(msgid)s]: '
                     '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
                 cls = e.__class__
-                cls_name = '%s.%s' % (cls.__module__, cls.__name__)
+                cls_name = '{}.{}'.format(cls.__module__, cls.__name__)
                 reply = (comm.Message.ERR.value, cls_name, e.args)
                 try:
                     channel.send((msgid, reply))
-                except IOError as exc:
+                except OSError as exc:
                     self.communication_error = exc
 
         return _call_back

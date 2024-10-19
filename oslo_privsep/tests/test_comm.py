@@ -19,7 +19,7 @@ from oslotest import base
 from oslo_privsep import comm
 
 
-class BufSock(object):
+class BufSock:
     def __init__(self):
         self.readpos = 0
         self.buf = io.BytesIO()
@@ -42,7 +42,7 @@ class BufSock(object):
 
 class TestSerialization(base.BaseTestCase):
     def setUp(self):
-        super(TestSerialization, self).setUp()
+        super().setUp()
 
         sock = BufSock()
 
@@ -93,7 +93,7 @@ class TestSerialization(base.BaseTestCase):
         )
 
     def test_badobj(self):
-        class UnknownClass(object):
+        class UnknownClass:
             pass
 
         obj = UnknownClass()

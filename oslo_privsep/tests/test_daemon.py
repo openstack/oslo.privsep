@@ -75,19 +75,19 @@ def logme(level, msg, exc_info=False):
 class LogRecorder(pylogging.Formatter):
     def __init__(self, logs, *args, **kwargs):
         kwargs['validate'] = False
-        super(LogRecorder, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.logs = logs
 
     def format(self, record):
         self.logs.append(copy.deepcopy(record))
-        return super(LogRecorder, self).format(record)
+        return super().format(record)
 
 
 @testtools.skipIf(platform.system() != 'Linux',
                   'works only on Linux platform.')
 class LogTest(testctx.TestContextTestCase):
     def setUp(self):
-        super(LogTest, self).setUp()
+        super().setUp()
 
     def test_priv_loglevel(self):
         logger = self.useFixture(fixtures.FakeLogger(
@@ -185,8 +185,8 @@ class DaemonTest(base.BaseTestCase):
             mock_keepcaps.mock_calls)
 
         mock_dropcaps.assert_called_once_with(
-            set((capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN)),
-            set((capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN)),
+            {capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN},
+            {capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN},
             [])
 
 
@@ -213,7 +213,7 @@ class ClientChannelTestCase(base.BaseTestCase):
     }
 
     def setUp(self):
-        super(ClientChannelTestCase, self).setUp()
+        super().setUp()
         context = get_fake_context()
         with mock.patch.object(comm.ClientChannel, '__init__'), \
                 mock.patch.object(daemon._ClientChannel, 'exchange_ping'):

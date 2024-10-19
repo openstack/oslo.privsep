@@ -32,7 +32,7 @@ context = priv_context.PrivContext(
 
 class TestContextTestCase(base.BaseTestCase):
     def setUp(self):
-        super(TestContextTestCase, self).setUp()
+        super().setUp()
         privsep_fixture = self.useFixture(
             fixture.UnprivilegedPrivsepFixture(context))
         self.privsep_conf = privsep_fixture.conf
