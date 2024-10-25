@@ -50,12 +50,12 @@ def do_some_long(long_timeout=0.4):
 
 class CustomError(Exception):
     def __init__(self, code, msg):
-        super(CustomError, self).__init__(code, msg)
+        super().__init__(code, msg)
         self.code = code
         self.msg = msg
 
     def __str__(self):
-        return 'Code %s: %s' % (self.code, self.msg)
+        return 'Code {}: {}'.format(self.code, self.msg)
 
 
 @testctx.context.entrypoint
@@ -172,7 +172,7 @@ class SeparationTest(testctx.TestContextTestCase):
                   'works only on Linux platform.')
 class RootwrapTest(testctx.TestContextTestCase):
     def setUp(self):
-        super(RootwrapTest, self).setUp()
+        super().setUp()
         testctx.context.stop()
 
         # Generate a command that will run daemon.helper_main without

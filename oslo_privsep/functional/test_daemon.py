@@ -70,7 +70,7 @@ def logs():
 
 class TestDaemon(base.BaseTestCase):
     def setUp(self):
-        super(TestDaemon, self).setUp()
+        super().setUp()
         venv_path = os.environ['VIRTUAL_ENV']
         self.cfg_fixture = self.useFixture(config_fixture.Config())
         self.cfg_fixture.config(
