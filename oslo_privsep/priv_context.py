@@ -18,7 +18,6 @@ import functools
 import logging
 import multiprocessing
 import shlex
-import sys
 import threading
 
 from oslo_config import cfg
@@ -145,10 +144,7 @@ class PrivContext:
         self.prefix = prefix
         self.cfg_section = cfg_section
 
-        # NOTE(claudiub): oslo.privsep is not currently supported on Windows,
-        # as it uses Linux-specific functionality (os.fork, socker.AF_UNIX).
-        # The client_mode should be set to False on Windows.
-        self.client_mode = sys.platform != 'win32'
+        self.client_mode = True
         self.channel = None
         self.start_lock = threading.Lock()
 
@@ -215,10 +211,6 @@ class PrivContext:
         return cmd
 
     def set_client_mode(self, enabled):
-        if enabled and sys.platform == 'win32':
-            raise RuntimeError(
-                "Enabling the client_mode is not currently "
-                "supported on Windows.")
         self.client_mode = enabled
 
     def entrypoint(self, func):

@@ -17,7 +17,6 @@ import eventlet
 import fixtures
 import functools
 import logging as pylogging
-import platform
 import sys
 import time
 from unittest import mock
@@ -25,7 +24,6 @@ from unittest import mock
 from oslo_log import formatters
 from oslo_log import log as logging
 from oslotest import base
-import testtools
 
 from oslo_privsep import capabilities
 from oslo_privsep import comm
@@ -83,8 +81,6 @@ class LogRecorder(pylogging.Formatter):
         return super().format(record)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
 class LogTest(testctx.TestContextTestCase):
     def setUp(self):
         super().setUp()
@@ -152,8 +148,6 @@ class LogTest(testctx.TestContextTestCase):
         formatter.format(record)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
 class DaemonTest(base.BaseTestCase):
 
     @mock.patch('os.setuid')
@@ -190,8 +184,6 @@ class DaemonTest(base.BaseTestCase):
             [])
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
 class WithContextTest(testctx.TestContextTestCase):
 
     def test_unexported(self):
