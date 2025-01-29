@@ -55,6 +55,7 @@ import sys
 import tempfile
 import threading
 
+import debtcollector
 import eventlet
 from eventlet import patcher
 from oslo_config import cfg
@@ -83,7 +84,10 @@ def _null():
     return []
 
 
+_MONKEY_PATCHED = False
 for module in EVENTLET_MODULES:
+    if eventlet.patcher.is_monkey_patched(module):
+        _MONKEY_PATCHED = True
     if hasattr(patcher, '_green_%s_modules' % module):
         method = getattr(patcher, '_green_%s_modules' % module)
     elif hasattr(patcher, '_green_%s' % module):
@@ -91,6 +95,10 @@ for module in EVENTLET_MODULES:
     else:
         method = _null()
     EVENTLET_LIBRARIES.append((module, method))
+
+if _MONKEY_PATCHED:
+    debtcollector.deprecate(
+        "Eventlet support is deprecated and will be removed")
 
 
 @enum.unique
