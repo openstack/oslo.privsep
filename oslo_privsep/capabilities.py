@@ -14,7 +14,6 @@
 
 import enum
 import os
-import platform
 import sys
 
 import cffi
@@ -114,17 +113,10 @@ ffi = cffi.FFI()
 ffi.cdef(CDEF)
 
 
-if platform.system() == 'Linux':
-    # mock.patching crt.* directly seems to upset cffi.  Use an
-    # indirection point here for easier testing.
-    crt = ffi.dlopen(None)
-    _prctl = crt.prctl
-    _capget = crt.capget
-    _capset = crt.capset
-else:
-    _prctl = None
-    _capget = None
-    _capset = None
+crt = ffi.dlopen(None)
+_prctl = crt.prctl
+_capget = crt.capget
+_capset = crt.capset
 
 
 def set_keepcaps(enable):
