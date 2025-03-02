@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    A new configuration option is added: ``log_daemon_traceback``. If enabled,
+    the client logger will print any exception traceback occurred in the
+    daemon.
