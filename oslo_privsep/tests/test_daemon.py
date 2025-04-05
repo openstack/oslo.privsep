@@ -70,6 +70,11 @@ def logme(level, msg, exc_info=False):
         LOG.log(level, msg)
 
 
+@testctx.context.entrypoint
+def raise_runtimeerror():
+    raise RuntimeError()
+
+
 class LogRecorder(pylogging.Formatter):
     def __init__(self, logs, *args, **kwargs):
         kwargs['validate'] = False
@@ -82,9 +87,6 @@ class LogRecorder(pylogging.Formatter):
 
 
 class LogTest(testctx.TestContextTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_priv_loglevel(self):
         logger = self.useFixture(fixtures.FakeLogger(
             level=logging.INFO))
@@ -109,7 +111,10 @@ class LogTest(testctx.TestContextTestCase):
             # class/function, not an instance :(
             formatter=functools.partial(LogRecorder, logs)))
 
-        logme(logging.WARN, 'test with exc', exc_info=True)
+        try:
+            logme(logging.WARN, 'test with exc', exc_info=True)
+        except Exception:
+            pass
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
@@ -146,6 +151,32 @@ class LogTest(testctx.TestContextTestCase):
             logging_default_format_string="NOCTXT: %(message)s")
         formatter = formatters.ContextFormatter(config=fake_config)
         formatter.format(record)
+
+
+class LogTestDaemonTraceback(testctx.TestContextTestCase):
+    def setUp(self):
+        self.config_override = {'log_daemon_traceback': True}
+        super().setUp()
+
+    def test_record_daemon_traceback(self):
+        self.privsep_conf.set_override(
+            'log_daemon_traceback', True, group='privsep')
+        logs = []
+        self.useFixture(fixtures.FakeLogger(
+            level=logging.INFO, format='dummy',
+            # fixtures.FakeLogger accepts only a formatter
+            # class/function, not an instance :(
+            formatter=functools.partial(LogRecorder, logs)))
+
+        self.assertRaises(RuntimeError, raise_runtimeerror)
+        time.sleep(0.1)  # Hack to give logging thread a chance to run
+
+        self.assertEqual(1, len(logs))
+        record = logs[0]
+        self.assertIn('Privsep daemon traceback: ', record.getMessage())
+        self.assertIsNone(record.exc_info)
+        self.assertEqual('MainProcess', record.processName)
+        self.assertEqual(logging.WARN, record.levelno)
 
 
 class DaemonTest(base.BaseTestCase):

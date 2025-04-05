@@ -26,8 +26,9 @@ LOG = logging.getLogger(__name__)
 
 
 class UnprivilegedPrivsepFixture(fixtures.Fixture):
-    def __init__(self, context):
+    def __init__(self, context, config_override):
         self.context = context
+        self.config_override = config_override
 
     def setUp(self):
         super().setUp()
@@ -38,6 +39,8 @@ class UnprivilegedPrivsepFixture(fixtures.Fixture):
         for k in ('user', 'group'):
             self.conf.set_override(
                 k, None, group=self.context.cfg_section)
+        for k, v in self.config_override.items():
+            self.conf.set_override(k, v, group='privsep')
 
         orig_pid = os.getpid()
         try:

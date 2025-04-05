@@ -68,6 +68,10 @@ OPTS = [
                help=_('Logger name to use for this privsep context.  By '
                       'default all contexts log with oslo_privsep.daemon.'),
                default='oslo_privsep.daemon'),
+    cfg.BoolOpt('log_daemon_traceback',
+                help=_('Print the exception traceback happened in the daemon '
+                       'in the client logger'),
+                default=False),
 ]
 
 _ENTRYPOINT_ATTR = 'privsep_entrypoint'

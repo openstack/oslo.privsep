@@ -33,8 +33,11 @@ context = priv_context.PrivContext(
 class TestContextTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
+        config_override = getattr(self, 'config_override', {})
         privsep_fixture = self.useFixture(
-            fixture.UnprivilegedPrivsepFixture(context))
+            fixture.UnprivilegedPrivsepFixture(
+                context, config_override)
+        )
         self.privsep_conf = privsep_fixture.conf
 
     def assertNotMyPid(self, pid):

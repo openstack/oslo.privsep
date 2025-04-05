@@ -56,6 +56,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import traceback
 
 import debtcollector
 import eventlet
@@ -187,6 +188,7 @@ class _ClientChannel(comm.ClientChannel):
 
     def __init__(self, sock, context):
         self.log = logging.getLogger(context.conf.logger_name)
+        self.log_traceback = context.conf.log_daemon_traceback
         super().__init__(sock)
         self.exchange_ping()
 
@@ -216,6 +218,12 @@ class _ClientChannel(comm.ClientChannel):
             # TODO(gus): see what can be done to preserve traceback
             # (without leaking local values)
             exc_type = importutils.import_class(result[1])
+            if self.log_traceback:
+                try:
+                    msg = 'Privsep daemon traceback: {}'.format(result[3])
+                    self.log.warning(msg)
+                except IndexError:
+                    pass
             raise exc_type(*result[2])
         else:
             raise ProtocolError(_('Unexpected response: %r') % result)
@@ -483,7 +491,8 @@ class Daemon:
                 '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
             cls = e.__class__
             cls_name = '{}.{}'.format(cls.__module__, cls.__name__)
-            return (comm.Message.ERR.value, cls_name, e.args)
+            return (comm.Message.ERR.value, cls_name, e.args,
+                    traceback.format_exc())
 
     def _create_done_callback(self, msgid):
         """Creates a future callback to receive command execution results.
@@ -511,7 +520,8 @@ class Daemon:
                     '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
                 cls = e.__class__
                 cls_name = '{}.{}'.format(cls.__module__, cls.__name__)
-                reply = (comm.Message.ERR.value, cls_name, e.args)
+                reply = (comm.Message.ERR.value, cls_name, e.args,
+                         traceback.format_exc())
                 try:
                     channel.send((msgid, reply))
                 except OSError as exc:
