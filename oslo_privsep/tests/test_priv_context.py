@@ -15,11 +15,14 @@
 
 import logging
 import os
+import platform
 import shlex
 import sys
 import tempfile
 import time
 from unittest import mock
+
+import testtools
 
 from oslo_privsep import comm
 from oslo_privsep import daemon
@@ -63,6 +66,8 @@ def fail(custom=False):
         raise RuntimeError("I can't let you do that Dave")
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class PrivContextTest(testctx.TestContextTestCase):
 
     def test_set_client_mode(self):
@@ -129,6 +134,8 @@ class PrivContextTest(testctx.TestContextTestCase):
         self.assertTrue(context.start_lock.__enter__.called)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class SeparationTest(testctx.TestContextTestCase):
     def test_getpid(self):
         # Verify that priv_getpid() was executed in another process.
@@ -149,6 +156,8 @@ class SeparationTest(testctx.TestContextTestCase):
         self.assertNotMyPid(priv_getpid())
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class RootwrapTest(testctx.TestContextTestCase):
     def setUp(self):
         super().setUp()
@@ -186,6 +195,8 @@ class RootwrapTest(testctx.TestContextTestCase):
         self.assertEqual(42, res)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class SerializationTest(testctx.TestContextTestCase):
     def test_basic_functionality(self):
         self.assertEqual(43, add1(42))

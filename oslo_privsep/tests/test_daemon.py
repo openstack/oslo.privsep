@@ -17,6 +17,7 @@ import eventlet
 import fixtures
 import functools
 import logging as pylogging
+import platform
 import sys
 import time
 from unittest import mock
@@ -24,6 +25,7 @@ from unittest import mock
 from oslo_log import formatters
 from oslo_log import log as logging
 from oslotest import base
+import testtools
 
 from oslo_privsep import capabilities
 from oslo_privsep import comm
@@ -86,6 +88,8 @@ class LogRecorder(pylogging.Formatter):
         return super().format(record)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class LogTest(testctx.TestContextTestCase):
     def test_priv_loglevel(self):
         logger = self.useFixture(fixtures.FakeLogger(
@@ -153,6 +157,8 @@ class LogTest(testctx.TestContextTestCase):
         formatter.format(record)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class LogTestDaemonTraceback(testctx.TestContextTestCase):
     def setUp(self):
         self.config_override = {'log_daemon_traceback': True}
@@ -179,6 +185,8 @@ class LogTestDaemonTraceback(testctx.TestContextTestCase):
         self.assertEqual(logging.WARN, record.levelno)
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class DaemonTest(base.BaseTestCase):
 
     @mock.patch('os.setuid')
@@ -215,6 +223,8 @@ class DaemonTest(base.BaseTestCase):
             [])
 
 
+@testtools.skipIf(platform.system() != 'Linux',
+                  'works only on Linux platform.')
 class WithContextTest(testctx.TestContextTestCase):
 
     def test_unexported(self):
