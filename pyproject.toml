@@ -39,3 +39,7 @@ privsep-helper = "oslo_privsep.daemon:helper_main"
 
 [tool.setuptools]
 packages = ["oslo_privsep"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ['B404', 'B603']
