@@ -257,7 +257,7 @@ class PrivContext:
 
     def _wrap(self, func, *args, _wrap_timeout=None, **kwargs):
         if self.client_mode:
-            name = '{}.{}'.format(func.__module__, func.__name__)
+            name = f'{func.__module__}.{func.__name__}'
             if self.channel is not None and not self.channel.running:
                 LOG.warning("RESTARTING PrivContext for %s", name)
                 self.stop()

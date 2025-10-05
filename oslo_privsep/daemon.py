@@ -223,7 +223,7 @@ class _ClientChannel(comm.ClientChannel):
             exc_type = importutils.import_class(result[1])
             if self.log_traceback:
                 try:
-                    msg = 'Privsep daemon traceback: {}'.format(result[3])
+                    msg = f'Privsep daemon traceback: {result[3]}'
                     self.log.warning(msg)
                 except IndexError:
                     pass
@@ -493,7 +493,7 @@ class Daemon:
                 'privsep: Exception during request[%(msgid)s]: '
                 '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
             cls = e.__class__
-            cls_name = '{}.{}'.format(cls.__module__, cls.__name__)
+            cls_name = f'{cls.__module__}.{cls.__name__}'
             return (comm.Message.ERR.value, cls_name, e.args,
                     traceback.format_exc())
 
@@ -522,7 +522,7 @@ class Daemon:
                     'privsep: Exception during request[%(msgid)s]: '
                     '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
                 cls = e.__class__
-                cls_name = '{}.{}'.format(cls.__module__, cls.__name__)
+                cls_name = f'{cls.__module__}.{cls.__name__}'
                 reply = (comm.Message.ERR.value, cls_name, e.args,
                          traceback.format_exc())
                 try:

@@ -92,7 +92,7 @@ class Deserializer:
                     if not buf:
                         raise
                     self.unpacker.feed(buf)
-                except socket.timeout:
+                except TimeoutError:
                     pass
 
 
@@ -193,7 +193,7 @@ class ClientChannel:
 
                 reply = future.result()
             except Exception:
-                LOG.warning("Unexpected error: {}".format(sys.exc_info()[0]))
+                LOG.warning(f"Unexpected error: {sys.exc_info()[0]}")
                 raise
             finally:
                 del self.outstanding_msgs[myid]

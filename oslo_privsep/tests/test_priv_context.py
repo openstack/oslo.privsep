@@ -55,7 +55,7 @@ class CustomError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return 'Code {}: {}'.format(self.code, self.msg)
+        return f'Code {self.code}: {self.msg}'
 
 
 @testctx.context.entrypoint
