@@ -1,19 +1,18 @@
-========================
-Team and repository tags
-========================
-
-.. image:: https://governance.openstack.org/tc/badges/oslo.privsep.svg
-    :target: https://governance.openstack.org/tc/reference/tags/index.html
-
-.. Change things from this point on
-
 ============
 oslo.privsep
 ============
 
+.. image:: https://governance.openstack.org/tc/badges/oslo.privsep.svg
+
+.. Change things from this point on
+
 .. image:: https://img.shields.io/pypi/v/oslo.privsep.svg
     :target: https://pypi.org/project/oslo.privsep/
     :alt: Latest Version
+
+.. image:: https://img.shields.io/pypi/dm/oslo.privsep.svg
+    :target: https://pypi.org/project/oslo.privsep/
+    :alt: Downloads
 
 OpenStack library for privilege separation
 
