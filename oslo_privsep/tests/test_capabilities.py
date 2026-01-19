@@ -20,7 +20,6 @@ from oslo_privsep import capabilities
 
 
 class TestCapabilities(base.BaseTestCase):
-
     @mock.patch('oslo_privsep.capabilities._prctl')
     def test_set_keepcaps_error(self, mock_prctl):
         mock_prctl.return_value = -1
@@ -36,13 +35,15 @@ class TestCapabilities(base.BaseTestCase):
         self.assertEqual(1, mock_prctl.call_count)
         self.assertCountEqual(
             [8, 1],  # [PR_SET_KEEPCAPS, true]
-            [int(x) for x in mock_prctl.call_args[0]])
+            [int(x) for x in mock_prctl.call_args[0]],
+        )
 
     @mock.patch('oslo_privsep.capabilities._capset')
     def test_drop_all_caps_except_error(self, mock_capset):
         mock_capset.return_value = -1
         self.assertRaises(
-            OSError, capabilities.drop_all_caps_except, [0], [0], [0])
+            OSError, capabilities.drop_all_caps_except, [0], [0], [0]
+        )
 
     @mock.patch('oslo_privsep.capabilities._capset')
     def test_drop_all_caps_except(self, mock_capset):
@@ -50,12 +51,15 @@ class TestCapabilities(base.BaseTestCase):
 
         # Somewhat arbitrary bit patterns to exercise _caps_to_mask
         capabilities.drop_all_caps_except(
-            (17, 24, 49), (8, 10, 35, 56), (24, 31, 40))
+            (17, 24, 49), (8, 10, 35, 56), (24, 31, 40)
+        )
 
         self.assertEqual(1, mock_capset.call_count)
         hdr, data = mock_capset.call_args[0]
-        self.assertEqual(0x20071026,  # _LINUX_CAPABILITY_VERSION_2
-                         hdr.version)
+        self.assertEqual(
+            0x20071026,  # _LINUX_CAPABILITY_VERSION_2
+            hdr.version,
+        )
         self.assertEqual(0x01020000, data[0].effective)
         self.assertEqual(0x00020000, data[1].effective)
         self.assertEqual(0x00000500, data[0].permitted)
@@ -79,10 +83,10 @@ class TestCapabilities(base.BaseTestCase):
             data[0].inheritable = 0x81000000
             data[1].inheritable = 0x00000100
             return 0
+
         mock_capget.side_effect = impl
 
         self.assertCountEqual(
-            ([17, 24, 49],
-             [8, 10, 35, 56],
-             [24, 31, 40]),
-            capabilities.get_caps())
+            ([17, 24, 49], [8, 10, 35, 56], [24, 31, 40]),
+            capabilities.get_caps(),
+        )

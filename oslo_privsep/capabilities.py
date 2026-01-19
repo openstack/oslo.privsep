@@ -129,8 +129,7 @@ else:
 
 def set_keepcaps(enable):
     """Set/unset thread's "keep capabilities" flag - see prctl(2)"""
-    ret = _prctl(crt.PR_SET_KEEPCAPS,
-                 ffi.cast('unsigned long', bool(enable)))
+    ret = _prctl(crt.PR_SET_KEEPCAPS, ffi.cast('unsigned long', bool(enable)))
     if ret != 0:
         errno = ffi.errno
         raise OSError(errno, os.strerror(errno))
@@ -142,15 +141,16 @@ def drop_all_caps_except(effective, permitted, inheritable):
     prm = _caps_to_mask(permitted)
     inh = _caps_to_mask(inheritable)
 
-    header = ffi.new('cap_user_header_t',
-                     {'version': crt._LINUX_CAPABILITY_VERSION_2,
-                      'pid': 0})
+    header = ffi.new(
+        'cap_user_header_t',
+        {'version': crt._LINUX_CAPABILITY_VERSION_2, 'pid': 0},
+    )
     data = ffi.new('struct __user_cap_data_struct[2]')
-    data[0].effective = eff & 0xffffffff
+    data[0].effective = eff & 0xFFFFFFFF
     data[1].effective = eff >> 32
-    data[0].permitted = prm & 0xffffffff
+    data[0].permitted = prm & 0xFFFFFFFF
     data[1].permitted = prm >> 32
-    data[0].inheritable = inh & 0xffffffff
+    data[0].inheritable = inh & 0xFFFFFFFF
     data[1].inheritable = inh >> 32
 
     ret = _capset(header, data)
@@ -174,9 +174,10 @@ def _caps_to_mask(caps):
 
 def get_caps():
     """Return (effective, permitted, inheritable) as lists of caps"""
-    header = ffi.new('cap_user_header_t',
-                     {'version': crt._LINUX_CAPABILITY_VERSION_2,
-                      'pid': 0})
+    header = ffi.new(
+        'cap_user_header_t',
+        {'version': crt._LINUX_CAPABILITY_VERSION_2, 'pid': 0},
+    )
     data = ffi.new('struct __user_cap_data_struct[2]')
     ret = _capget(header, data)
     if ret != 0:
@@ -184,10 +185,7 @@ def get_caps():
         raise OSError(errno, os.strerror(errno))
 
     return (
-        _mask_to_caps(data[0].effective |
-                      (data[1].effective << 32)),
-        _mask_to_caps(data[0].permitted |
-                      (data[1].permitted << 32)),
-        _mask_to_caps(data[0].inheritable |
-                      (data[1].inheritable << 32)),
+        _mask_to_caps(data[0].effective | (data[1].effective << 32)),
+        _mask_to_caps(data[0].permitted | (data[1].permitted << 32)),
+        _mask_to_caps(data[0].inheritable | (data[1].inheritable << 32)),
     )

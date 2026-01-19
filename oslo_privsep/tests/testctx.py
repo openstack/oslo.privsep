@@ -35,8 +35,7 @@ class TestContextTestCase(base.BaseTestCase):
         super().setUp()
         config_override = getattr(self, 'config_override', {})
         privsep_fixture = self.useFixture(
-            fixture.UnprivilegedPrivsepFixture(
-                context, config_override)
+            fixture.UnprivilegedPrivsepFixture(context, config_override)
         )
         self.privsep_conf = privsep_fixture.conf
 

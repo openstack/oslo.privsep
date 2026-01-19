@@ -66,10 +66,10 @@ def fail(custom=False):
         raise RuntimeError("I can't let you do that Dave")
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class PrivContextTest(testctx.TestContextTestCase):
-
     def test_set_client_mode(self):
         context = priv_context.PrivContext('test', capabilities=[])
         self.assertTrue(context.client_mode)
@@ -82,9 +82,12 @@ class PrivContextTest(testctx.TestContextTestCase):
         _, temp_path = tempfile.mkstemp()
         cmd = testctx.context.helper_command(temp_path)
         expected = [
-            'foo', '--bar',
-            '--privsep_context', testctx.context.pypath,
-            '--privsep_sock_path', temp_path,
+            'foo',
+            '--bar',
+            '--privsep_context',
+            testctx.context.pypath,
+            '--privsep_sock_path',
+            temp_path,
         ]
         self.assertEqual(expected, cmd)
 
@@ -93,11 +96,15 @@ class PrivContextTest(testctx.TestContextTestCase):
         _, temp_path = tempfile.mkstemp()
         cmd = testctx.context.helper_command(temp_path)
         expected = [
-            'sudo', 'privsep-helper',
-            '--config-file', '/bar.conf',
+            'sudo',
+            'privsep-helper',
+            '--config-file',
+            '/bar.conf',
             # --config-dir arg should be skipped
-            '--privsep_context', testctx.context.pypath,
-            '--privsep_sock_path', temp_path,
+            '--privsep_context',
+            testctx.context.pypath,
+            '--privsep_sock_path',
+            temp_path,
         ]
         self.assertEqual(expected, cmd)
 
@@ -107,21 +114,31 @@ class PrivContextTest(testctx.TestContextTestCase):
         _, temp_path = tempfile.mkstemp()
         cmd = testctx.context.helper_command(temp_path)
         expected = [
-            'sudo', 'privsep-helper',
-            '--config-file', '/bar.conf',
-            '--config-file', '/baz.conf',
-            '--config-dir', '/foo.d',
-            '--privsep_context', testctx.context.pypath,
-            '--privsep_sock_path', temp_path,
+            'sudo',
+            'privsep-helper',
+            '--config-file',
+            '/bar.conf',
+            '--config-file',
+            '/baz.conf',
+            '--config-dir',
+            '/foo.d',
+            '--privsep_context',
+            testctx.context.pypath,
+            '--privsep_sock_path',
+            temp_path,
         ]
         self.assertEqual(expected, cmd)
 
     def test_init_known_contexts(self):
-        self.assertEqual(testctx.context.helper_command('/sock')[:2],
-                         ['sudo', 'privsep-helper'])
+        self.assertEqual(
+            testctx.context.helper_command('/sock')[:2],
+            ['sudo', 'privsep-helper'],
+        )
         priv_context.init(root_helper=['sudo', 'rootwrap'])
-        self.assertEqual(testctx.context.helper_command('/sock')[:3],
-                         ['sudo', 'rootwrap', 'privsep-helper'])
+        self.assertEqual(
+            testctx.context.helper_command('/sock')[:3],
+            ['sudo', 'rootwrap', 'privsep-helper'],
+        )
 
     def test_start_acquires_lock(self):
         context = priv_context.PrivContext('test', capabilities=[])
@@ -134,8 +151,9 @@ class PrivContextTest(testctx.TestContextTestCase):
         self.assertTrue(context.start_lock.__enter__.called)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class SeparationTest(testctx.TestContextTestCase):
     def test_getpid(self):
         # Verify that priv_getpid() was executed in another process.
@@ -156,8 +174,9 @@ class SeparationTest(testctx.TestContextTestCase):
         self.assertNotMyPid(priv_getpid())
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class RootwrapTest(testctx.TestContextTestCase):
     def setUp(self):
         super().setUp()
@@ -167,15 +186,18 @@ class RootwrapTest(testctx.TestContextTestCase):
         # requiring it to be properly installed.
         cmd = [
             'env',
-            'PYTHON_PATH=%s' % os.path.pathsep.join(sys.path),
-            sys.executable, daemon.__file__,
+            f'PYTHON_PATH={os.path.pathsep.join(sys.path)}',
+            sys.executable,
+            daemon.__file__,
         ]
         if LOG.isEnabledFor(logging.DEBUG):
             cmd.append('--debug')
 
         self.privsep_conf.set_override(
-            'helper_command', ' '.join(map(shlex.quote, cmd)),
-            group=testctx.context.cfg_section)
+            'helper_command',
+            ' '.join(map(shlex.quote, cmd)),
+            group=testctx.context.cfg_section,
+        )
 
         testctx.context.start(method=priv_context.Method.ROOTWRAP)
 
@@ -185,25 +207,24 @@ class RootwrapTest(testctx.TestContextTestCase):
         self.assertNotMyPid(priv_pid)
 
     def test_long_call_with_timeout(self):
-        self.assertRaises(
-            comm.PrivsepTimeout,
-            do_some_long
-        )
+        self.assertRaises(comm.PrivsepTimeout, do_some_long)
 
     def test_long_call_within_timeout(self):
         res = do_some_long(0.001)
         self.assertEqual(42, res)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class SerializationTest(testctx.TestContextTestCase):
     def test_basic_functionality(self):
         self.assertEqual(43, add1(42))
 
     def test_raises_standard(self):
         self.assertRaisesRegex(
-            RuntimeError, "I can't let you do that Dave", fail)
+            RuntimeError, "I can't let you do that Dave", fail
+        )
 
     def test_raises_custom(self):
         exc = self.assertRaises(CustomError, fail, custom=True)

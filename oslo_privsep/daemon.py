@@ -76,8 +76,16 @@ if platform.system() == 'Linux':
 LOG = logging.getLogger(__name__)
 
 
-EVENTLET_MODULES = ('os', 'select', 'socket', 'thread', 'time', 'MySQLdb',
-                    'builtins', 'subprocess')
+EVENTLET_MODULES = (
+    'os',
+    'select',
+    'socket',
+    'thread',
+    'time',
+    'MySQLdb',
+    'builtins',
+    'subprocess',
+)
 EVENTLET_LIBRARIES = []
 
 
@@ -89,17 +97,18 @@ _MONKEY_PATCHED = False
 for module in EVENTLET_MODULES:
     if eventlet.patcher.is_monkey_patched(module):
         _MONKEY_PATCHED = True
-    if hasattr(patcher, '_green_%s_modules' % module):
-        method = getattr(patcher, '_green_%s_modules' % module)
-    elif hasattr(patcher, '_green_%s' % module):
-        method = getattr(patcher, '_green_%s' % module)
+    if hasattr(patcher, f'_green_{module}_modules'):
+        method = getattr(patcher, f'_green_{module}_modules')
+    elif hasattr(patcher, f'_green_{module}'):
+        method = getattr(patcher, f'_green_{module}')
     else:
         method = _null()
     EVENTLET_LIBRARIES.append((module, method))
 
 if _MONKEY_PATCHED:
     debtcollector.deprecate(
-        "Eventlet support is deprecated and will be removed")
+        "Eventlet support is deprecated and will be removed"
+    )
 
 
 @enum.unique
@@ -201,8 +210,9 @@ class _ClientChannel(comm.ClientChannel):
             reply = self.send_recv((comm.Message.PING.value,))
             success = reply[0] == comm.Message.PONG
         except Exception as e:
-            self.log.exception('Error while sending initial PING to privsep: '
-                               '%s', e)
+            self.log.exception(
+                'Error while sending initial PING to privsep: %s', e
+            )
             success = False
         if not success:
             msg = _('Privsep daemon failed to start')
@@ -210,8 +220,9 @@ class _ClientChannel(comm.ClientChannel):
             raise FailedToDropPrivileges(msg)
 
     def remote_call(self, name, args, kwargs, timeout):
-        result = self.send_recv((comm.Message.CALL.value, name, args, kwargs),
-                                timeout)
+        result = self.send_recv(
+            (comm.Message.CALL.value, name, args, kwargs), timeout
+        )
         if result[0] == comm.Message.RET:
             # (RET, return value)
             return result[1]
@@ -234,14 +245,17 @@ class _ClientChannel(comm.ClientChannel):
     def out_of_band(self, msg):
         if msg[0] == comm.Message.LOG:
             # (LOG, LogRecord __dict__)
-            message = {encodeutils.safe_decode(k): v
-                       for k, v in msg[1].items()}
+            message = {
+                encodeutils.safe_decode(k): v for k, v in msg[1].items()
+            }
             record = pylogging.makeLogRecord(message)
             if self.log.isEnabledFor(record.levelno):
                 self.log.logger.handle(record)
         else:
-            self.log.warning('Ignoring unexpected OOB message from privileged '
-                             'process: %r', msg)
+            self.log.warning(
+                'Ignoring unexpected OOB message from privileged process: %r',
+                msg,
+            )
 
 
 def fdopen(fd, *args, **kwargs):
@@ -266,10 +280,8 @@ def _fd_logger(level=logging.WARN):
     def logger(f):
         for line in f:
             LOG.log(level, 'privsep log: %s', line.rstrip())
-    t = threading.Thread(
-        name='fd_logger',
-        target=logger, args=(read_end,)
-    )
+
+    t = threading.Thread(name='fd_logger', target=logger, args=(read_end,))
     t.daemon = True
     t.start()
 
@@ -326,8 +338,9 @@ class ForkingClientChannel(_ClientChannel):
             sock_a.close()
 
             # Replace root logger early (to capture any errors during setup)
-            replace_logging(PrivsepLogHandler(channel,
-                                              processName=str(context)))
+            replace_logging(
+                PrivsepLogHandler(channel, processName=str(context))
+            )
 
             Daemon(channel, context=context).run()
             LOG.debug('privsep daemon exiting')
@@ -365,10 +378,14 @@ class RootwrapClientChannel(_ClientChannel):
 
             cmd = context.helper_command(sockpath)
             LOG.info('Running privsep helper: %s', cmd)
-            proc = subprocess.Popen(cmd, shell=False, stderr=_fd_logger())
+            proc = subprocess.Popen(  # noqa: S603
+                cmd, shell=False, stderr=_fd_logger()
+            )
             if proc.wait() != 0:
-                msg = ('privsep helper command exited non-zero (%s)' %
-                       proc.returncode)
+                msg = (
+                    f'privsep helper command exited non-zero '
+                    f'({proc.returncode})'
+                )
                 LOG.critical(msg)
                 raise FailedToDropPrivileges(msg)
             LOG.info('Spawned new privsep daemon via rootwrap')
@@ -399,7 +416,8 @@ class Daemon:
         self.group = context.conf.group
         self.caps = set(context.conf.capabilities)
         self.thread_pool = futures.ThreadPoolExecutor(
-            context.conf.thread_pool_size)
+            context.conf.thread_pool_size
+        )
         self.communication_error = None
 
     def run(self):
@@ -437,16 +455,17 @@ class Daemon:
         finally:
             capabilities.set_keepcaps(False)
 
-        LOG.info('privsep process running with uid/gid: %(uid)s/%(gid)s',
-                 {'uid': os.getuid(), 'gid': os.getgid()})
+        LOG.info(
+            'privsep process running with uid/gid: %(uid)s/%(gid)s',
+            {'uid': os.getuid(), 'gid': os.getgid()},
+        )
 
         capabilities.drop_all_caps_except(self.caps, self.caps, [])
 
         def fmt_caps(capset):
             if not capset:
                 return 'none'
-            fc = [capabilities.CAPS_BYVALUE.get(c, str(c))
-                  for c in capset]
+            fc = [capabilities.CAPS_BYVALUE.get(c, str(c)) for c in capset]
             fc.sort()
             return '|'.join(fc)
 
@@ -458,7 +477,8 @@ class Daemon:
                 'eff': fmt_caps(eff),
                 'prm': fmt_caps(prm),
                 'inh': fmt_caps(inh),
-            })
+            },
+        )
 
     def _process_cmd(self, msgid, cmd, *args):
         """Executes the requested command in an execution thread.
@@ -490,12 +510,18 @@ class Daemon:
             return (comm.Message.RET.value, ret)
         except Exception as e:
             LOG.debug(
-                'privsep: Exception during request[%(msgid)s]: '
-                '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
+                'privsep: Exception during request[%(msgid)s]: %(err)s',
+                {'msgid': msgid, 'err': e},
+                exc_info=True,
+            )
             cls = e.__class__
             cls_name = f'{cls.__module__}.{cls.__name__}'
-            return (comm.Message.ERR.value, cls_name, e.args,
-                    traceback.format_exc())
+            return (
+                comm.Message.ERR.value,
+                cls_name,
+                e.args,
+                traceback.format_exc(),
+            )
 
     def _create_done_callback(self, msgid):
         """Creates a future callback to receive command execution results.
@@ -512,19 +538,27 @@ class Daemon:
             """
             try:
                 reply = result.result()
-                LOG.debug('privsep: reply[%(msgid)s]: %(reply)s',
-                          {'msgid': msgid, 'reply': reply})
+                LOG.debug(
+                    'privsep: reply[%(msgid)s]: %(reply)s',
+                    {'msgid': msgid, 'reply': reply},
+                )
                 channel.send((msgid, reply))
             except OSError:
                 self.communication_error = sys.exc_info()
             except Exception as e:
                 LOG.debug(
-                    'privsep: Exception during request[%(msgid)s]: '
-                    '%(err)s', {'msgid': msgid, 'err': e}, exc_info=True)
+                    'privsep: Exception during request[%(msgid)s]: %(err)s',
+                    {'msgid': msgid, 'err': e},
+                    exc_info=True,
+                )
                 cls = e.__class__
                 cls_name = f'{cls.__module__}.{cls.__name__}'
-                reply = (comm.Message.ERR.value, cls_name, e.args,
-                         traceback.format_exc())
+                reply = (
+                    comm.Message.ERR.value,
+                    cls_name,
+                    e.args,
+                    traceback.format_exc(),
+                )
                 try:
                     channel.send((msgid, reply))
                 except OSError as exc:
@@ -558,10 +592,12 @@ class Daemon:
 def helper_main():
     """Start privileged process, serving requests over a Unix socket."""
 
-    cfg.CONF.register_cli_opts([
-        cfg.StrOpt('privsep_context', required=True),
-        cfg.StrOpt('privsep_sock_path', required=True),
-    ])
+    cfg.CONF.register_cli_opts(
+        [
+            cfg.StrOpt('privsep_context', required=True),
+            cfg.StrOpt('privsep_sock_path', required=True),
+        ]
+    )
 
     logging.register_options(cfg.CONF)
 
@@ -570,10 +606,13 @@ def helper_main():
     logging.setup(cfg.CONF, 'privsep', fix_eventlet=False)
 
     context = importutils.import_class(cfg.CONF.privsep_context)
-    from oslo_privsep import priv_context   # Avoid circular import
+    from oslo_privsep import priv_context  # Avoid circular import
+
     if not isinstance(context, priv_context.PrivContext):
-        LOG.fatal('--privsep_context must be the (python) name of a '
-                  'PrivContext object')
+        LOG.fatal(
+            '--privsep_context must be the (python) name of a '
+            'PrivContext object'
+        )
 
     sock = socket.socket(socket.AF_UNIX)
     sock.connect(cfg.CONF.privsep_sock_path)

@@ -41,37 +41,55 @@ def CapNameOrInt(value):
 
 
 OPTS = [
-    cfg.StrOpt('user',
-               help=_('User that the privsep daemon should run as.')),
-    cfg.StrOpt('group',
-               help=_('Group that the privsep daemon should run as.')),
-    cfg.Opt('capabilities',
-            type=types.List(CapNameOrInt), default=[],
-            help=_('List of Linux capabilities retained by the privsep '
-                   'daemon.')),
-    cfg.IntOpt('thread_pool_size',
-               min=1,
-               help=_("The number of threads available for privsep to "
-                      "concurrently run processes. Defaults to the number of "
-                      "CPU cores in the system."),
-               default=multiprocessing.cpu_count(),
-               sample_default='multiprocessing.cpu_count()'),
-    cfg.StrOpt('helper_command',
-               help=_('Command to invoke to start the privsep daemon if '
-                      'not using the "fork" method. '
-                      'If not specified, a default is generated using '
-                      '"sudo privsep-helper" and arguments designed to '
-                      'recreate the current configuration. '
-                      'This command must accept suitable --privsep_context '
-                      'and --privsep_sock_path arguments.')),
-    cfg.StrOpt('logger_name',
-               help=_('Logger name to use for this privsep context.  By '
-                      'default all contexts log with oslo_privsep.daemon.'),
-               default='oslo_privsep.daemon'),
-    cfg.BoolOpt('log_daemon_traceback',
-                help=_('Print the exception traceback happened in the daemon '
-                       'in the client logger'),
-                default=False),
+    cfg.StrOpt('user', help=_('User that the privsep daemon should run as.')),
+    cfg.StrOpt(
+        'group', help=_('Group that the privsep daemon should run as.')
+    ),
+    cfg.Opt(
+        'capabilities',
+        type=types.List(CapNameOrInt),
+        default=[],
+        help=_('List of Linux capabilities retained by the privsep daemon.'),
+    ),
+    cfg.IntOpt(
+        'thread_pool_size',
+        min=1,
+        help=_(
+            "The number of threads available for privsep to "
+            "concurrently run processes. Defaults to the number of "
+            "CPU cores in the system."
+        ),
+        default=multiprocessing.cpu_count(),
+        sample_default='multiprocessing.cpu_count()',
+    ),
+    cfg.StrOpt(
+        'helper_command',
+        help=_(
+            'Command to invoke to start the privsep daemon if '
+            'not using the "fork" method. '
+            'If not specified, a default is generated using '
+            '"sudo privsep-helper" and arguments designed to '
+            'recreate the current configuration. '
+            'This command must accept suitable --privsep_context '
+            'and --privsep_sock_path arguments.'
+        ),
+    ),
+    cfg.StrOpt(
+        'logger_name',
+        help=_(
+            'Logger name to use for this privsep context.  By '
+            'default all contexts log with oslo_privsep.daemon.'
+        ),
+        default='oslo_privsep.daemon',
+    ),
+    cfg.BoolOpt(
+        'log_daemon_traceback',
+        help=_(
+            'Print the exception traceback happened in the daemon '
+            'in the client logger'
+        ),
+        default=False,
+    ),
 ]
 
 _ENTRYPOINT_ATTR = 'privsep_entrypoint'
@@ -95,13 +113,14 @@ def _list_opts():
     :returns: a list of (group_name, opts) tuples
     """
     # This is the default group name, but that can be overridden by the caller
-    group = cfg.OptGroup('privsep',
-                         title='oslo.privsep options',
-                         help='Configuration options for the oslo.privsep '
-                              'daemon. Note that this group name can be '
-                              'changed by the consuming service. Check the '
-                              'service\'s docs to see if this is the case.'
-                         )
+    group = cfg.OptGroup(
+        'privsep',
+        title='oslo.privsep options',
+        help='Configuration options for the oslo.privsep '
+        'daemon. Note that this group name can be '
+        'changed by the consuming service. Check the '
+        'service\'s docs to see if this is the case.',
+    )
     return [(group, copy.deepcopy(OPTS))]
 
 
@@ -130,10 +149,15 @@ def init(root_helper=None):
 
 
 class PrivContext:
-    def __init__(self, prefix, cfg_section='privsep', pypath=None,
-                 capabilities=None, logger_name='oslo_privsep.daemon',
-                 timeout=None):
-
+    def __init__(
+        self,
+        prefix,
+        cfg_section='privsep',
+        pypath=None,
+        capabilities=None,
+        logger_name='oslo_privsep.daemon',
+        timeout=None,
+    ):
         # Note that capabilities=[] means retaining no capabilities
         # and leaves even uid=0 with no powers except being able to
         # read/write to the filesystem as uid=0.  This might be what
@@ -153,10 +177,12 @@ class PrivContext:
         self.start_lock = threading.Lock()
 
         cfg.CONF.register_opts(OPTS, group=cfg_section)
-        cfg.CONF.set_default('capabilities', group=cfg_section,
-                             default=capabilities)
-        cfg.CONF.set_default('logger_name', group=cfg_section,
-                             default=logger_name)
+        cfg.CONF.set_default(
+            'capabilities', group=cfg_section, default=capabilities
+        )
+        cfg.CONF.set_default(
+            'logger_name', group=cfg_section, default=logger_name
+        )
         self.timeout = timeout
 
     @property
@@ -167,7 +193,7 @@ class PrivContext:
         return cfg.CONF[self.cfg_section]
 
     def __repr__(self):
-        return 'PrivContext(cfg_section=%s)' % self.cfg_section
+        return f'PrivContext(cfg_section={self.cfg_section})'
 
     def helper_command(self, sockpath):
         # We need to be able to reconstruct the context object in the new
@@ -180,11 +206,14 @@ class PrivContext:
         # These asserts here are just attempts to catch errors earlier.
         # TODO(gus): Consider replacing with setuptools entry_points.
         if self.pypath is None:
-            raise AssertionError('helper_command requires priv_context '
-                                 'pypath to be specified')
+            raise AssertionError(
+                'helper_command requires priv_context pypath to be specified'
+            )
         if importutils.import_class(self.pypath) is not self:
-            raise AssertionError('helper_command requires priv_context '
-                                 'pypath for context object')
+            raise AssertionError(
+                'helper_command requires priv_context '
+                'pypath for context object'
+            )
 
         # Note order is important here.  Deployments will (hopefully)
         # have the exact arguments in sudoers/rootwrap configs and
@@ -209,8 +238,8 @@ class PrivContext:
                 pass
 
         cmd.extend(
-            ['--privsep_context', self.pypath,
-             '--privsep_sock_path', sockpath])
+            ['--privsep_context', self.pypath, '--privsep_sock_path', sockpath]
+        )
 
         return cmd
 
@@ -225,19 +254,21 @@ class PrivContext:
         """This is intended to be used as a decorator with timeout."""
 
         def wrap(func):
-
             @functools.wraps(func)
             def inner(*args, **kwargs):
                 f = self._entrypoint(func)
                 return f(*args, _wrap_timeout=timeout, **kwargs)
+
             setattr(inner, _ENTRYPOINT_ATTR, self)
             return inner
+
         return wrap
 
     def _entrypoint(self, func):
         if not func.__module__.startswith(self.prefix):
-            raise AssertionError('%r entrypoints must be below "%s"' %
-                                 (self, self.prefix))
+            raise AssertionError(
+                f'{self!r} entrypoints must be below "{self.prefix}"'
+            )
 
         # Right now, we only track a single context in
         # _ENTRYPOINT_ATTR.  This could easily be expanded into a set,
@@ -245,8 +276,9 @@ class PrivContext:
         # someone has a need to associate the same entrypoint with
         # multiple contexts.
         if getattr(func, _ENTRYPOINT_ATTR, None) is not None:
-            raise AssertionError('%r is already associated with another '
-                                 'PrivContext' % func)
+            raise AssertionError(
+                f'{func!r} is already associated with another PrivContext'
+            )
 
         f = functools.partial(self._wrap, func)
         setattr(f, _ENTRYPOINT_ATTR, self)
@@ -264,8 +296,7 @@ class PrivContext:
             if self.channel is None:
                 self.start()
             r_call_timeout = _wrap_timeout or self.timeout
-            return self.channel.remote_call(name, args, kwargs,
-                                            r_call_timeout)
+            return self.channel.remote_call(name, args, kwargs, r_call_timeout)
         else:
             return func(*args, **kwargs)
 
@@ -280,7 +311,7 @@ class PrivContext:
             elif method is Method.FORK:
                 channel = daemon.ForkingClientChannel(context=self)
             else:
-                raise ValueError('Unknown method: %s' % method)
+                raise ValueError(f'Unknown method: {method}')
 
             self.channel = channel
 

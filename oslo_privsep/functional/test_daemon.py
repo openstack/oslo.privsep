@@ -36,14 +36,14 @@ test_context_with_timeout = priv_context.PrivContext(
     cfg_section='privsep',
     pypath=__name__ + '.test_context_with_timeout',
     capabilities=[],
-    timeout=0.03
+    timeout=0.03,
 )
 
 
 @test_context.entrypoint
 def sleep():
     # We don't want the daemon to be able to handle these calls too fast.
-    time.sleep(.001)
+    time.sleep(0.001)
 
 
 @test_context.entrypoint_with_timeout(0.03)
@@ -65,7 +65,7 @@ def one():
 
 @test_context.entrypoint
 def logs():
-    logging.warning('foo')
+    logging.warning('foo')  # noqa: LOG015
 
 
 class TestDaemon(base.BaseTestCase):
@@ -75,7 +75,8 @@ class TestDaemon(base.BaseTestCase):
         self.cfg_fixture = self.useFixture(config_fixture.Config())
         self.cfg_fixture.config(
             group='privsep',
-            helper_command='sudo -E %s/bin/privsep-helper' % venv_path)
+            helper_command=f'sudo -E {venv_path}/bin/privsep-helper',
+        )
         priv_context.init()
 
     def test_concurrency(self):

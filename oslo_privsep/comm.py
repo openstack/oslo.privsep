@@ -38,6 +38,7 @@ LOG = logging.getLogger(__name__)
 @enum.unique
 class Message(enum.IntEnum):
     """Types of messages sent across the communication channel"""
+
     PING = 1
     PONG = 2
     CALL = 3
@@ -55,8 +56,9 @@ class Serializer:
         self.writesock = writesock
 
     def send(self, msg):
-        buf = msgpack.packb(msg, use_bin_type=True,
-                            unicode_errors='surrogateescape')
+        buf = msgpack.packb(
+            msg, use_bin_type=True, unicode_errors='surrogateescape'
+        )
         self.writesock.sendall(buf)
 
     def close(self):
@@ -120,13 +122,17 @@ class Future:
         before = datetime.datetime.now()
         if not self.condvar.wait(timeout=self.timeout):
             now = datetime.datetime.now()
-            LOG.warning('Timeout while executing a command, timeout: %s, '
-                        'time elapsed: %s', self.timeout,
-                        (now - before).total_seconds())
-            return (Message.ERR.value,
-                    '{}.{}'.format(PrivsepTimeout.__module__,
-                                   PrivsepTimeout.__name__),
-                    '')
+            LOG.warning(
+                'Timeout while executing a command, timeout: %s, '
+                'time elapsed: %s',
+                self.timeout,
+                (now - before).total_seconds(),
+            )
+            return (
+                Message.ERR.value,
+                f'{PrivsepTimeout.__module__}.{PrivsepTimeout.__name__}',
+                '',
+            )
         if self.error is not None:
             raise self.error
         return self.data
@@ -158,8 +164,10 @@ class ClientChannel:
             else:
                 with self.lock:
                     if msgid not in self.outstanding_msgs:
-                        LOG.warning("msgid should be in oustanding_msgs, it is"
-                                    "possible that timeout is reached!")
+                        LOG.warning(
+                            "msgid should be in oustanding_msgs, it is"
+                            "possible that timeout is reached!"
+                        )
                         continue
                     self.outstanding_msgs[msgid].set_result(data)
 
@@ -169,7 +177,7 @@ class ClientChannel:
         # get an immediate similar error.
         LOG.debug('EOF on privsep read channel')
 
-        exc = IOError(_('Premature eof waiting for privileged process'))
+        exc = OSError(_('Premature eof waiting for privileged process'))
         with self.lock:
             for mbox in self.outstanding_msgs.values():
                 mbox.set_exception(exc)
@@ -193,7 +201,7 @@ class ClientChannel:
 
                 reply = future.result()
             except Exception:
-                LOG.warning(f"Unexpected error: {sys.exc_info()[0]}")
+                LOG.warning("Unexpected error: %s", sys.exc_info()[0])
                 raise
             finally:
                 del self.outstanding_msgs[myid]

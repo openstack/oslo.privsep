@@ -51,7 +51,9 @@ def get_fake_context(conf_attrs=None, **context_attrs):
     context.conf.group = 84
     context.conf.thread_pool_size = 10
     context.conf.capabilities = [
-        capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN]
+        capabilities.CAP_SYS_ADMIN,
+        capabilities.CAP_NET_ADMIN,
+    ]
     context.conf.logger_name = 'oslo_privsep.daemon'
     vars(context).update(context_attrs)
     vars(context.conf).update(conf_attrs)
@@ -88,12 +90,12 @@ class LogRecorder(pylogging.Formatter):
         return super().format(record)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class LogTest(testctx.TestContextTestCase):
     def test_priv_loglevel(self):
-        logger = self.useFixture(fixtures.FakeLogger(
-            level=logging.INFO))
+        logger = self.useFixture(fixtures.FakeLogger(level=logging.INFO))
 
         # These write to the log on the priv side
         logme(logging.DEBUG, 'test@DEBUG')
@@ -109,15 +111,19 @@ class LogTest(testctx.TestContextTestCase):
     def test_record_data(self):
         logs = []
 
-        self.useFixture(fixtures.FakeLogger(
-            level=logging.INFO, format='dummy',
-            # fixtures.FakeLogger accepts only a formatter
-            # class/function, not an instance :(
-            formatter=functools.partial(LogRecorder, logs)))
+        self.useFixture(
+            fixtures.FakeLogger(
+                level=logging.INFO,
+                format='dummy',
+                # fixtures.FakeLogger accepts only a formatter
+                # class/function, not an instance :(
+                formatter=functools.partial(LogRecorder, logs),
+            )
+        )
 
         try:
             logme(logging.WARN, 'test with exc', exc_info=True)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
@@ -128,8 +134,9 @@ class LogTest(testctx.TestContextTestCase):
         self.assertIn('test with exc', record.getMessage())
         self.assertIsNone(record.exc_info)
         self.assertIn('TestException: with arg', record.exc_text)
-        self.assertEqual('PrivContext(cfg_section=privsep)',
-                         record.processName)
+        self.assertEqual(
+            'PrivContext(cfg_section=privsep)', record.processName
+        )
         self.assertIn('test_daemon.py', record.exc_text)
         self.assertEqual(logging.WARN, record.levelno)
         self.assertEqual('logme', record.funcName)
@@ -137,11 +144,15 @@ class LogTest(testctx.TestContextTestCase):
     def test_format_record(self):
         logs = []
 
-        self.useFixture(fixtures.FakeLogger(
-            level=logging.INFO, format='dummy',
-            # fixtures.FakeLogger accepts only a formatter
-            # class/function, not an instance :(
-            formatter=functools.partial(LogRecorder, logs)))
+        self.useFixture(
+            fixtures.FakeLogger(
+                level=logging.INFO,
+                format='dummy',
+                # fixtures.FakeLogger accepts only a formatter
+                # class/function, not an instance :(
+                formatter=functools.partial(LogRecorder, logs),
+            )
+        )
 
         logme(logging.WARN, 'test with exc', exc_info=True)
 
@@ -152,13 +163,15 @@ class LogTest(testctx.TestContextTestCase):
         record = logs[0]
         # Verify the log record can be formatted by ContextFormatter
         fake_config = mock.Mock(
-            logging_default_format_string="NOCTXT: %(message)s")
+            logging_default_format_string="NOCTXT: %(message)s"
+        )
         formatter = formatters.ContextFormatter(config=fake_config)
         formatter.format(record)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class LogTestDaemonTraceback(testctx.TestContextTestCase):
     def setUp(self):
         self.config_override = {'log_daemon_traceback': True}
@@ -166,13 +179,18 @@ class LogTestDaemonTraceback(testctx.TestContextTestCase):
 
     def test_record_daemon_traceback(self):
         self.privsep_conf.set_override(
-            'log_daemon_traceback', True, group='privsep')
+            'log_daemon_traceback', True, group='privsep'
+        )
         logs = []
-        self.useFixture(fixtures.FakeLogger(
-            level=logging.INFO, format='dummy',
-            # fixtures.FakeLogger accepts only a formatter
-            # class/function, not an instance :(
-            formatter=functools.partial(LogRecorder, logs)))
+        self.useFixture(
+            fixtures.FakeLogger(
+                level=logging.INFO,
+                format='dummy',
+                # fixtures.FakeLogger accepts only a formatter
+                # class/function, not an instance :(
+                formatter=functools.partial(LogRecorder, logs),
+            )
+        )
 
         self.assertRaises(RuntimeError, raise_runtimeerror)
         time.sleep(0.1)  # Hack to give logging thread a chance to run
@@ -185,17 +203,23 @@ class LogTestDaemonTraceback(testctx.TestContextTestCase):
         self.assertEqual(logging.WARN, record.levelno)
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class DaemonTest(base.BaseTestCase):
-
     @mock.patch('os.setuid')
     @mock.patch('os.setgid')
     @mock.patch('os.setgroups')
     @mock.patch('oslo_privsep.capabilities.set_keepcaps')
     @mock.patch('oslo_privsep.capabilities.drop_all_caps_except')
-    def test_drop_privs(self, mock_dropcaps, mock_keepcaps,
-                        mock_setgroups, mock_setgid, mock_setuid):
+    def test_drop_privs(
+        self,
+        mock_dropcaps,
+        mock_keepcaps,
+        mock_setgroups,
+        mock_setgid,
+        mock_setuid,
+    ):
         channel = mock.NonCallableMock()
         context = get_fake_context()
 
@@ -211,30 +235,33 @@ class DaemonTest(base.BaseTestCase):
         mock_setgid.assert_called_once_with(84)
         mock_setgroups.assert_called_once_with([])
 
-        assert manager.mock_calls == expected_calls
+        self.assertEqual(expected_calls, manager.mock_calls)
 
         self.assertCountEqual(
-            [mock.call(True), mock.call(False)],
-            mock_keepcaps.mock_calls)
+            [mock.call(True), mock.call(False)], mock_keepcaps.mock_calls
+        )
 
         mock_dropcaps.assert_called_once_with(
             {capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN},
             {capabilities.CAP_SYS_ADMIN, capabilities.CAP_NET_ADMIN},
-            [])
+            [],
+        )
 
 
-@testtools.skipIf(platform.system() != 'Linux',
-                  'works only on Linux platform.')
+@testtools.skipIf(
+    platform.system() != 'Linux', 'works only on Linux platform.'
+)
 class WithContextTest(testctx.TestContextTestCase):
-
     def test_unexported(self):
         self.assertRaisesRegex(
-            NameError, 'undecorated not exported',
-            testctx.context._wrap, undecorated)
+            NameError,
+            'undecorated not exported',
+            testctx.context._wrap,
+            undecorated,
+        )
 
 
 class ClientChannelTestCase(base.BaseTestCase):
-
     DICT = {
         'string_1': ('tuple_1', b'tuple_2'),
         b'byte_1': ['list_1', 'list_2'],
@@ -248,22 +275,28 @@ class ClientChannelTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         context = get_fake_context()
-        with mock.patch.object(comm.ClientChannel, '__init__'), \
-                mock.patch.object(daemon._ClientChannel, 'exchange_ping'):
+        with (
+            mock.patch.object(comm.ClientChannel, '__init__'),
+            mock.patch.object(daemon._ClientChannel, 'exchange_ping'),
+        ):
             self.client_channel = daemon._ClientChannel(mock.ANY, context)
 
     @mock.patch.object(daemon.LOG.logger, 'handle')
     def test_out_of_band_log_message(self, handle_mock):
         message = [comm.Message.LOG, self.DICT]
         self.assertEqual(self.client_channel.log, daemon.LOG)
-        with mock.patch.object(pylogging, 'makeLogRecord') as mock_make_log, \
-                mock.patch.object(daemon.LOG, 'isEnabledFor',
-                                  return_value=True) as mock_enabled:
+        with (
+            mock.patch.object(pylogging, 'makeLogRecord') as mock_make_log,
+            mock.patch.object(
+                daemon.LOG, 'isEnabledFor', return_value=True
+            ) as mock_enabled,
+        ):
             self.client_channel.out_of_band(message)
             mock_make_log.assert_called_once_with(self.EXPECTED)
             handle_mock.assert_called_once_with(mock_make_log.return_value)
             mock_enabled.assert_called_once_with(
-                mock_make_log.return_value.levelno)
+                mock_make_log.return_value.levelno
+            )
 
     def test_out_of_band_not_log_message(self):
         with mock.patch.object(daemon.LOG, 'warning') as mock_warning:
@@ -272,12 +305,15 @@ class ClientChannelTestCase(base.BaseTestCase):
 
     @mock.patch.object(daemon.logging, 'getLogger')
     @mock.patch.object(pylogging, 'makeLogRecord')
-    def test_out_of_band_log_message_context_logger(self, make_log_mock,
-                                                    get_logger_mock):
+    def test_out_of_band_log_message_context_logger(
+        self, make_log_mock, get_logger_mock
+    ):
         logger_name = 'os_brick.privileged'
         context = get_fake_context(conf_attrs={'logger_name': logger_name})
-        with mock.patch.object(comm.ClientChannel, '__init__'), \
-                mock.patch.object(daemon._ClientChannel, 'exchange_ping'):
+        with (
+            mock.patch.object(comm.ClientChannel, '__init__'),
+            mock.patch.object(daemon._ClientChannel, 'exchange_ping'),
+        ):
             channel = daemon._ClientChannel(mock.ANY, context)
 
         get_logger_mock.assert_called_once_with(logger_name)
@@ -288,22 +324,29 @@ class ClientChannelTestCase(base.BaseTestCase):
 
         make_log_mock.assert_called_once_with(self.EXPECTED)
         channel.log.isEnabledFor.assert_called_once_with(
-            make_log_mock.return_value.levelno)
+            make_log_mock.return_value.levelno
+        )
         channel.log.logger.handle.assert_called_once_with(
-            make_log_mock.return_value)
+            make_log_mock.return_value
+        )
 
 
 class UnMonkeyPatch(base.BaseTestCase):
-
     def test_un_monkey_patch(self):
-        self.assertFalse(any(
-            eventlet.patcher.is_monkey_patched(eventlet_mod_name)
-            for eventlet_mod_name in daemon.EVENTLET_MODULES))
+        self.assertFalse(
+            any(
+                eventlet.patcher.is_monkey_patched(eventlet_mod_name)
+                for eventlet_mod_name in daemon.EVENTLET_MODULES
+            )
+        )
 
         eventlet.monkey_patch()
-        self.assertTrue(any(
-            eventlet.patcher.is_monkey_patched(eventlet_mod_name)
-            for eventlet_mod_name in daemon.EVENTLET_MODULES))
+        self.assertTrue(
+            any(
+                eventlet.patcher.is_monkey_patched(eventlet_mod_name)
+                for eventlet_mod_name in daemon.EVENTLET_MODULES
+            )
+        )
 
         daemon.un_monkey_patch()
         for eventlet_mod_name, func_modules in daemon.EVENTLET_LIBRARIES:
@@ -314,7 +357,8 @@ class UnMonkeyPatch(base.BaseTestCase):
                 orig_mod = eventlet.patcher.original(name)
                 patched_mod = sys.modules.get(name)
                 for attr_name in green_mod.__patched__:
-                    un_monkey_patched_attr = getattr(patched_mod, attr_name,
-                                                     None)
+                    un_monkey_patched_attr = getattr(
+                        patched_mod, attr_name, None
+                    )
                     original_attr = getattr(orig_mod, attr_name, None)
                     self.assertEqual(un_monkey_patched_attr, original_attr)
