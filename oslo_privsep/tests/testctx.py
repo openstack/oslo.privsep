@@ -17,8 +17,8 @@ import os
 from oslotest import base
 
 from oslo_privsep import priv_context
+from oslo_privsep.test import fixture
 import oslo_privsep.tests
-from oslo_privsep.tests import fixture
 
 
 context = priv_context.PrivContext(
