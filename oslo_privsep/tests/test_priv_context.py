@@ -142,7 +142,7 @@ class PrivContextTest(testctx.TestContextTestCase):
 
     def test_start_acquires_lock(self):
         context = priv_context.PrivContext('test', capabilities=[])
-        context.channel = "something not None"
+        context.channel = "something not None"  # type: ignore[assignment]
         context.start_lock = mock.Mock()
         context.start_lock.__enter__ = mock.Mock()
         context.start_lock.__exit__ = mock.Mock()

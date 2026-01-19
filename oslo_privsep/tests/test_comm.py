@@ -46,8 +46,8 @@ class TestSerialization(base.BaseTestCase):
 
         sock = BufSock()
 
-        self.input = comm.Serializer(sock)
-        self.output = iter(comm.Deserializer(sock))
+        self.input = comm.Serializer(sock)  # type: ignore[arg-type]
+        self.output = iter(comm.Deserializer(sock))  # type: ignore[arg-type]
 
     def send(self, data):
         self.input.send(data)

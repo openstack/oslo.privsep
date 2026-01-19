@@ -15,6 +15,7 @@
 import logging
 import os
 import sys
+from typing import Any
 
 import fixtures
 from oslo_config import fixture as cfg_fixture
@@ -25,11 +26,15 @@ LOG = logging.getLogger(__name__)
 
 
 class UnprivilegedPrivsepFixture(fixtures.Fixture):
-    def __init__(self, context, config_override):
+    def __init__(
+        self,
+        context: priv_context.PrivContext,
+        config_override: dict[str, Any],
+    ) -> None:
         self.context = context
         self.config_override = config_override
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.conf = self.useFixture(cfg_fixture.Config()).conf

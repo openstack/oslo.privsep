@@ -12,10 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from __future__ import annotations
+
+from collections.abc import Iterable
 import enum
 import os
 import platform
 import sys
+from typing import Any, TYPE_CHECKING
 
 import cffi
 
@@ -69,8 +73,54 @@ class Capabilities(enum.IntEnum):
     CAP_CHECKPOINT_RESTORE = 40
 
 
-CAPS_BYNAME = {}
-CAPS_BYVALUE = {}
+if TYPE_CHECKING:
+    # this is a bit long-winded, but it's the easiest way to expose these
+    # attributes via mypy
+    CAP_CHOWN = 0
+    CAP_DAC_OVERRIDE = 1
+    CAP_DAC_READ_SEARCH = 2
+    CAP_FOWNER = 3
+    CAP_FSETID = 4
+    CAP_KILL = 5
+    CAP_SETGID = 6
+    CAP_SETUID = 7
+    CAP_SETPCAP = 8
+    CAP_LINUX_IMMUTABLE = 9
+    CAP_NET_BIND_SERVICE = 10
+    CAP_NET_BROADCAST = 11
+    CAP_NET_ADMIN = 12
+    CAP_NET_RAW = 13
+    CAP_IPC_LOCK = 14
+    CAP_IPC_OWNER = 15
+    CAP_SYS_MODULE = 16
+    CAP_SYS_RAWIO = 17
+    CAP_SYS_CHROOT = 18
+    CAP_SYS_PTRACE = 19
+    CAP_SYS_PACCT = 20
+    CAP_SYS_ADMIN = 21
+    CAP_SYS_BOOT = 22
+    CAP_SYS_NICE = 23
+    CAP_SYS_RESOURCE = 24
+    CAP_SYS_TIME = 25
+    CAP_SYS_TTY_CONFIG = 26
+    CAP_MKNOD = 27
+    CAP_LEASE = 28
+    CAP_AUDIT_WRITE = 29
+    CAP_AUDIT_CONTROL = 30
+    CAP_SETFCAP = 31
+    CAP_MAC_OVERRIDE = 32
+    CAP_MAC_ADMIN = 33
+    CAP_SYSLOG = 34
+    CAP_WAKE_ALARM = 35
+    CAP_BLOCK_SUSPEND = 36
+    CAP_AUDIT_READ = 37
+    CAP_PERFMON = 38
+    CAP_BPF = 39
+    CAP_CHECKPOINT_RESTORE = 40
+
+
+CAPS_BYNAME: dict[str, int] = {}
+CAPS_BYVALUE: dict[int, str] = {}
 module = sys.modules[__name__]
 # Convenience dicts for human readable values
 # module attributes for backwards compat/convenience
@@ -114,6 +164,11 @@ ffi = cffi.FFI()
 ffi.cdef(CDEF)
 
 
+crt: Any
+_prctl: Any
+_capget: Any
+_capset: Any
+
 if platform.system() == 'Linux':
     # mock.patching crt.* directly seems to upset cffi.  Use an
     # indirection point here for easier testing.
@@ -127,7 +182,7 @@ else:
     _capset = None
 
 
-def set_keepcaps(enable):
+def set_keepcaps(enable: bool) -> None:
     """Set/unset thread's "keep capabilities" flag - see prctl(2)"""
     ret = _prctl(crt.PR_SET_KEEPCAPS, ffi.cast('unsigned long', bool(enable)))
     if ret != 0:
@@ -135,7 +190,11 @@ def set_keepcaps(enable):
         raise OSError(errno, os.strerror(errno))
 
 
-def drop_all_caps_except(effective, permitted, inheritable):
+def drop_all_caps_except(
+    effective: Iterable[int],
+    permitted: Iterable[int],
+    inheritable: Iterable[int],
+) -> None:
     """Set (effective, permitted, inheritable) to provided list of caps"""
     eff = _caps_to_mask(effective)
     prm = _caps_to_mask(permitted)
@@ -159,12 +218,12 @@ def drop_all_caps_except(effective, permitted, inheritable):
         raise OSError(errno, os.strerror(errno))
 
 
-def _mask_to_caps(mask):
+def _mask_to_caps(mask: int) -> list[int]:
     """Convert bitmask to list of set bit offsets"""
     return [i for i in range(64) if (1 << i) & mask]
 
 
-def _caps_to_mask(caps):
+def _caps_to_mask(caps: Iterable[int]) -> int:
     """Convert list of bit offsets to bitmask"""
     mask = 0
     for cap in caps:
@@ -172,7 +231,7 @@ def _caps_to_mask(caps):
     return mask
 
 
-def get_caps():
+def get_caps() -> tuple[list[int], list[int], list[int]]:
     """Return (effective, permitted, inheritable) as lists of caps"""
     header = ffi.new(
         'cap_user_header_t',

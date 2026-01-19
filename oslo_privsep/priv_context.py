@@ -12,6 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from __future__ import annotations
+
+from collections.abc import Callable
+from collections.abc import Iterable
 import copy
 import enum
 import functools
@@ -19,6 +23,7 @@ import logging
 import multiprocessing
 import shlex
 import threading
+from typing import Any
 
 from oslo_config import cfg
 from oslo_config import types
@@ -32,12 +37,12 @@ from oslo_privsep import daemon
 LOG = logging.getLogger(__name__)
 
 
-def CapNameOrInt(value):
-    value = str(value).strip()
+def CapNameOrInt(value: str | int) -> int:
+    value_str = str(value).strip()
     try:
-        return capabilities.CAPS_BYNAME[value]
+        return capabilities.CAPS_BYNAME[value_str]
     except KeyError:
-        return int(value)
+        return int(value_str)
 
 
 OPTS = [
@@ -96,7 +101,7 @@ _ENTRYPOINT_ATTR = 'privsep_entrypoint'
 _HELPER_COMMAND_PREFIX = ['sudo']
 
 
-def _list_opts():
+def _list_opts() -> list[tuple[cfg.OptGroup, list[cfg.Opt]]]:
     """Returns a list of oslo.config options available in the library.
 
     The returned list includes all oslo.config options which may be registered
@@ -130,7 +135,7 @@ class Method(enum.Enum):
     ROOTWRAP = 2
 
 
-def init(root_helper=None):
+def init(root_helper: list[str] | None = None) -> None:
     """Initialise oslo.privsep library.
 
     This function should be called at the top of main(), after the
@@ -151,13 +156,13 @@ def init(root_helper=None):
 class PrivContext:
     def __init__(
         self,
-        prefix,
-        cfg_section='privsep',
-        pypath=None,
-        capabilities=None,
-        logger_name='oslo_privsep.daemon',
-        timeout=None,
-    ):
+        prefix: str,
+        cfg_section: str = 'privsep',
+        pypath: str | None = None,
+        capabilities: Iterable[int] | None = None,
+        logger_name: str = 'oslo_privsep.daemon',
+        timeout: float | None = None,
+    ) -> None:
         # Note that capabilities=[] means retaining no capabilities
         # and leaves even uid=0 with no powers except being able to
         # read/write to the filesystem as uid=0.  This might be what
@@ -173,12 +178,12 @@ class PrivContext:
         self.cfg_section = cfg_section
 
         self.client_mode = True
-        self.channel = None
+        self.channel: daemon._ClientChannel | None = None
         self.start_lock = threading.Lock()
 
         cfg.CONF.register_opts(OPTS, group=cfg_section)
         cfg.CONF.set_default(
-            'capabilities', group=cfg_section, default=capabilities
+            'capabilities', group=cfg_section, default=list(capabilities)
         )
         cfg.CONF.set_default(
             'logger_name', group=cfg_section, default=logger_name
@@ -186,16 +191,16 @@ class PrivContext:
         self.timeout = timeout
 
     @property
-    def conf(self):
+    def conf(self) -> Any:
         """Return the oslo.config section object as lazily as possible."""
         # Need to avoid looking this up before oslo_config has been
         # properly initialized.
         return cfg.CONF[self.cfg_section]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'PrivContext(cfg_section={self.cfg_section})'
 
-    def helper_command(self, sockpath):
+    def helper_command(self, sockpath: str) -> list[str]:
         # We need to be able to reconstruct the context object in the new
         # python process we'll get after rootwrap/sudo.  This means we
         # need to construct the context object and store it somewhere
@@ -243,19 +248,21 @@ class PrivContext:
 
         return cmd
 
-    def set_client_mode(self, enabled):
+    def set_client_mode(self, enabled: bool) -> None:
         self.client_mode = enabled
 
-    def entrypoint(self, func):
+    def entrypoint(self, func: Callable[..., Any]) -> functools.partial[Any]:
         """This is intended to be used as a decorator."""
         return self._entrypoint(func)
 
-    def entrypoint_with_timeout(self, timeout):
+    def entrypoint_with_timeout(
+        self, timeout: float
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """This is intended to be used as a decorator with timeout."""
 
-        def wrap(func):
+        def wrap(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
-            def inner(*args, **kwargs):
+            def inner(*args: Any, **kwargs: Any) -> Any:
                 f = self._entrypoint(func)
                 return f(*args, _wrap_timeout=timeout, **kwargs)
 
@@ -264,7 +271,7 @@ class PrivContext:
 
         return wrap
 
-    def _entrypoint(self, func):
+    def _entrypoint(self, func: Callable[..., Any]) -> functools.partial[Any]:
         if not func.__module__.startswith(self.prefix):
             raise AssertionError(
                 f'{self!r} entrypoints must be below "{self.prefix}"'
@@ -284,10 +291,16 @@ class PrivContext:
         setattr(f, _ENTRYPOINT_ATTR, self)
         return f
 
-    def is_entrypoint(self, func):
+    def is_entrypoint(self, func: Callable[..., Any]) -> bool:
         return getattr(func, _ENTRYPOINT_ATTR, None) is self
 
-    def _wrap(self, func, *args, _wrap_timeout=None, **kwargs):
+    def _wrap(
+        self,
+        func: Callable[..., Any],
+        *args: Any,
+        _wrap_timeout: float | None = None,
+        **kwargs: Any,
+    ) -> Any:
         if self.client_mode:
             name = f'{func.__module__}.{func.__name__}'
             if self.channel is not None and not self.channel.running:
@@ -295,17 +308,21 @@ class PrivContext:
                 self.stop()
             if self.channel is None:
                 self.start()
+            if self.channel is None:
+                # narrow type: this will always be non-None thank to the above
+                raise RuntimeError('channel is not initialized')
             r_call_timeout = _wrap_timeout or self.timeout
             return self.channel.remote_call(name, args, kwargs, r_call_timeout)
         else:
             return func(*args, **kwargs)
 
-    def start(self, method=Method.ROOTWRAP):
+    def start(self, method: Method = Method.ROOTWRAP) -> None:
         with self.start_lock:
             if self.channel is not None:
                 LOG.warning('privsep daemon already running')
                 return
 
+            channel: daemon._ClientChannel
             if method is Method.ROOTWRAP:
                 channel = daemon.RootwrapClientChannel(context=self)
             elif method is Method.FORK:
@@ -315,7 +332,7 @@ class PrivContext:
 
             self.channel = channel
 
-    def stop(self):
+    def stop(self) -> None:
         if self.channel is not None:
             self.channel.close()
             self.channel = None

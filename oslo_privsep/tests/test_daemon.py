@@ -55,7 +55,7 @@ def get_fake_context(conf_attrs=None, **context_attrs):
         capabilities.CAP_NET_ADMIN,
     ]
     context.conf.logger_name = 'oslo_privsep.daemon'
-    vars(context).update(context_attrs)
+    vars(context).update(context_attrs)  # type: ignore[attr-defined]
     vars(context.conf).update(conf_attrs)
     return context
 
@@ -109,15 +109,16 @@ class LogTest(testctx.TestContextTestCase):
         self.assertIn('test@WARN', logger.output)
 
     def test_record_data(self):
-        logs = []
+        logs: list[pylogging.LogRecord] = []
+        # fixtures.FakeLogger accepts only a formatter class/function, not an
+        # instance :(
+        fmt = functools.partial(LogRecorder, logs)
 
         self.useFixture(
             fixtures.FakeLogger(
                 level=logging.INFO,
                 format='dummy',
-                # fixtures.FakeLogger accepts only a formatter
-                # class/function, not an instance :(
-                formatter=functools.partial(LogRecorder, logs),
+                formatter=fmt,  # type: ignore[arg-type]
             )
         )
 
@@ -142,15 +143,16 @@ class LogTest(testctx.TestContextTestCase):
         self.assertEqual('logme', record.funcName)
 
     def test_format_record(self):
-        logs = []
+        logs: list[pylogging.LogRecord] = []
+        # fixtures.FakeLogger accepts only a formatter class/function, not an
+        # instance :(
+        fmt = functools.partial(LogRecorder, logs)
 
         self.useFixture(
             fixtures.FakeLogger(
                 level=logging.INFO,
                 format='dummy',
-                # fixtures.FakeLogger accepts only a formatter
-                # class/function, not an instance :(
-                formatter=functools.partial(LogRecorder, logs),
+                formatter=fmt,  # type: ignore[arg-type]
             )
         )
 
@@ -181,14 +183,16 @@ class LogTestDaemonTraceback(testctx.TestContextTestCase):
         self.privsep_conf.set_override(
             'log_daemon_traceback', True, group='privsep'
         )
-        logs = []
+        logs: list[pylogging.LogRecord] = []
+        # fixtures.FakeLogger accepts only a formatter class/function, not an
+        # instance :(
+        fmt = functools.partial(LogRecorder, logs)
+
         self.useFixture(
             fixtures.FakeLogger(
                 level=logging.INFO,
                 format='dummy',
-                # fixtures.FakeLogger accepts only a formatter
-                # class/function, not an instance :(
-                formatter=functools.partial(LogRecorder, logs),
+                formatter=fmt,  # type: ignore[arg-type]
             )
         )
 
@@ -303,7 +307,7 @@ class ClientChannelTestCase(base.BaseTestCase):
             self.client_channel.out_of_band([comm.Message.PING])
             mock_warning.assert_called_once()
 
-    @mock.patch.object(daemon.logging, 'getLogger')
+    @mock.patch.object(daemon.logging, 'getLogger')  # type: ignore[attr-defined]
     @mock.patch.object(pylogging, 'makeLogRecord')
     def test_out_of_band_log_message_context_logger(
         self, make_log_mock, get_logger_mock
