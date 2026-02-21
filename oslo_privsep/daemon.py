@@ -641,7 +641,7 @@ def helper_main() -> None:
     from oslo_privsep import priv_context as priv_context_mod  # Avoid circular
 
     if not isinstance(context, priv_context_mod.PrivContext):
-        LOG.fatal(
+        LOG.critical(
             '--privsep_context must be the (python) name of a '
             'PrivContext object'
         )

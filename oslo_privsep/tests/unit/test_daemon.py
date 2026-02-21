@@ -327,10 +327,10 @@ class ClientChannelTestCase(base.BaseTestCase):
         channel.out_of_band(message)
 
         make_log_mock.assert_called_once_with(self.EXPECTED)
-        channel.log.isEnabledFor.assert_called_once_with(
+        channel.log.isEnabledFor.assert_called_once_with(  # type: ignore[attr-defined]
             make_log_mock.return_value.levelno
         )
-        channel.log.logger.handle.assert_called_once_with(
+        channel.log.logger.handle.assert_called_once_with(  # type: ignore[attr-defined]
             make_log_mock.return_value
         )
 
