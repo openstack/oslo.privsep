@@ -292,7 +292,7 @@ def fdopen(fd: int, *args: Any, **kwargs: Any) -> Any:
         return open(fd, *args, **kwargs)
 
 
-def _fd_logger(level: int = logging.WARN) -> Any:
+def _fd_logger(level: int = logging.WARNING) -> Any:
     """Helper that returns a file object that is asynchronously logged"""
     read_fd, write_fd = os.pipe()
     read_end = fdopen(read_fd, 'r', 1)

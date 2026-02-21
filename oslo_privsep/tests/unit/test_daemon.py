@@ -99,7 +99,7 @@ class LogTest(testctx.TestContextTestCase):
 
         # These write to the log on the priv side
         logme(logging.DEBUG, 'test@DEBUG')
-        logme(logging.WARN, 'test@WARN')
+        logme(logging.WARNING, 'test@WARN')
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
@@ -123,7 +123,7 @@ class LogTest(testctx.TestContextTestCase):
         )
 
         try:
-            logme(logging.WARN, 'test with exc', exc_info=True)
+            logme(logging.WARNING, 'test with exc', exc_info=True)
         except Exception:  # noqa: S110
             pass
 
@@ -139,7 +139,7 @@ class LogTest(testctx.TestContextTestCase):
             'PrivContext(cfg_section=privsep)', record.processName
         )
         self.assertIn('test_daemon.py', record.exc_text)
-        self.assertEqual(logging.WARN, record.levelno)
+        self.assertEqual(logging.WARNING, record.levelno)
         self.assertEqual('logme', record.funcName)
 
     def test_format_record(self):
@@ -156,7 +156,7 @@ class LogTest(testctx.TestContextTestCase):
             )
         )
 
-        logme(logging.WARN, 'test with exc', exc_info=True)
+        logme(logging.WARNING, 'test with exc', exc_info=True)
 
         time.sleep(0.1)  # Hack to give logging thread a chance to run
 
@@ -204,7 +204,7 @@ class LogTestDaemonTraceback(testctx.TestContextTestCase):
         self.assertIn('Privsep daemon traceback: ', record.getMessage())
         self.assertIsNone(record.exc_info)
         self.assertEqual('MainProcess', record.processName)
-        self.assertEqual(logging.WARN, record.levelno)
+        self.assertEqual(logging.WARNING, record.levelno)
 
 
 @testtools.skipIf(
