@@ -9,12 +9,12 @@ readme = "README.rst"
 authors = [
     {name = "OpenStack", email = "openstack-discuss@lists.openstack.org"},
 ]
+license = "Apache-2.0"
 requires-python = ">=3.10"
 classifiers = [
     "Environment :: OpenStack",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -38,8 +38,8 @@ privsep-helper = "oslo_privsep.daemon:helper_main"
 [project.entry-points."oslo.config.opts"]
 "oslo.privsep" = "oslo_privsep.priv_context:_list_opts"
 
-[tool.setuptools]
-packages = ["oslo_privsep"]
+[tool.setuptools.packages.find]
+include = ["oslo_privsep"]
 
 [tool.mypy]
 python_version = "3.10"
