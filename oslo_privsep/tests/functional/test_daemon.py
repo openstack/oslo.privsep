@@ -111,6 +111,7 @@ class TestDaemon(base.BaseTestCase):
 
     def test_logging(self):
         logs()
+        assert self.log_fixture.logger is not None
         self.assertIn('foo', self.log_fixture.logger.output)
 
 

@@ -134,11 +134,13 @@ class LogTest(testctx.TestContextTestCase):
         record = logs[0]
         self.assertIn('test with exc', record.getMessage())
         self.assertIsNone(record.exc_info)
+        self.assertIsNotNone(record.exc_text)
+        assert record.exc_text is not None
         self.assertIn('TestException: with arg', record.exc_text)
+        self.assertIn('test_daemon.py', record.exc_text)
         self.assertEqual(
             'PrivContext(cfg_section=privsep)', record.processName
         )
-        self.assertIn('test_daemon.py', record.exc_text)
         self.assertEqual(logging.WARNING, record.levelno)
         self.assertEqual('logme', record.funcName)
 
