@@ -63,8 +63,6 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 import debtcollector
-import eventlet
-from eventlet import patcher
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
@@ -103,16 +101,22 @@ def _null() -> list[Any]:
 
 
 _MONKEY_PATCHED = False
-for module in EVENTLET_MODULES:
-    if eventlet.patcher.is_monkey_patched(module):
-        _MONKEY_PATCHED = True
-    if hasattr(patcher, f'_green_{module}_modules'):
-        method = getattr(patcher, f'_green_{module}_modules')
-    elif hasattr(patcher, f'_green_{module}'):
-        method = getattr(patcher, f'_green_{module}')
-    else:
-        method = _null()
-    EVENTLET_LIBRARIES.append((module, method))
+try:
+    import eventlet
+    from eventlet import patcher
+except ImportError:
+    pass
+else:
+    for module in EVENTLET_MODULES:
+        if eventlet.patcher.is_monkey_patched(module):
+            _MONKEY_PATCHED = True
+        if hasattr(patcher, f'_green_{module}_modules'):
+            method = getattr(patcher, f'_green_{module}_modules')
+        elif hasattr(patcher, f'_green_{module}'):
+            method = getattr(patcher, f'_green_{module}')
+        else:
+            method = _null()
+        EVENTLET_LIBRARIES.append((module, method))
 
 if _MONKEY_PATCHED:
     debtcollector.deprecate(
@@ -286,7 +290,7 @@ def fdopen(fd: int, *args: Any, **kwargs: Any) -> Any:
     # are broken in lots of ways regarding blocking behaviour.  We
     # *need* the newer io.* objects on py2 (doesn't matter on py3,
     # since the old file code has been replaced with io.*)
-    if eventlet.patcher.is_monkey_patched('socket'):
+    if _MONKEY_PATCHED and eventlet.patcher.is_monkey_patched('socket'):
         return eventlet.greenio.GreenPipe(fd, *args, **kwargs)
     else:
         return open(fd, *args, **kwargs)
@@ -321,6 +325,9 @@ def replace_logging(
 
 
 def un_monkey_patch() -> None:
+    if not _MONKEY_PATCHED:
+        return
+
     for eventlet_mod_name, func_modules in EVENTLET_LIBRARIES:
         if not eventlet.patcher.is_monkey_patched(eventlet_mod_name):
             continue

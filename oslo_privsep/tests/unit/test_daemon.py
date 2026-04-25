@@ -347,6 +347,7 @@ class UnMonkeyPatch(base.BaseTestCase):
         )
 
         eventlet.monkey_patch()
+        daemon._MONKEY_PATCHED = True
         self.assertTrue(
             any(
                 eventlet.patcher.is_monkey_patched(eventlet_mod_name)
