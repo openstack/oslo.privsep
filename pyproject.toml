@@ -35,6 +35,12 @@ Repository = "https://opendev.org/openstack/oslo.privsep"
 [project.scripts]
 privsep-helper = "oslo_privsep.daemon:helper_main"
 
+[project.optional-dependencies]
+eventlet = [
+    "eventlet>=0.21.0", # MIT
+    "greenlet>=0.4.14", # MIT
+]
+
 [project.entry-points."oslo.config.opts"]
 "oslo.privsep" = "oslo_privsep.priv_context:_list_opts"
 
