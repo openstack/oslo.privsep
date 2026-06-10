@@ -29,9 +29,7 @@ import logging
 import socket
 import sys
 import threading
-from typing import Any
-
-from typing_extensions import Self
+from typing import Any, Self
 
 import msgpack
 
