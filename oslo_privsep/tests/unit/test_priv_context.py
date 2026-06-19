@@ -92,7 +92,7 @@ class PrivContextTest(testctx.TestContextTestCase):
         self.assertEqual(expected, cmd)
 
     def test_helper_command_default(self):
-        self.privsep_conf.config_file = ['/bar.conf']
+        self.privsep_conf.config_file = ['/bar.conf']  # type: ignore[attr-defined]
         _, temp_path = tempfile.mkstemp()
         cmd = testctx.context.helper_command(temp_path)
         expected = [
@@ -109,8 +109,8 @@ class PrivContextTest(testctx.TestContextTestCase):
         self.assertEqual(expected, cmd)
 
     def test_helper_command_default_dirtoo(self):
-        self.privsep_conf.config_file = ['/bar.conf', '/baz.conf']
-        self.privsep_conf.config_dir = ['/foo.d']
+        self.privsep_conf.config_file = ['/bar.conf', '/baz.conf']  # type: ignore[attr-defined]
+        self.privsep_conf.config_dir = ['/foo.d']  # type: ignore[attr-defined]
         _, temp_path = tempfile.mkstemp()
         cmd = testctx.context.helper_command(temp_path)
         expected = [

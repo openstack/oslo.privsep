@@ -37,12 +37,19 @@ from oslo_privsep import daemon
 LOG = logging.getLogger(__name__)
 
 
-def CapNameOrInt(value: str | int) -> int:
-    value_str = str(value).strip()
-    try:
-        return capabilities.CAPS_BYNAME[value_str]
-    except KeyError:
-        return int(value_str)
+class CapNameOrInt(types.ConfigType):
+    def __init__(self) -> None:
+        return super().__init__('capability')
+
+    def __call__(self, value: Any) -> int:
+        value_str = str(value).strip()
+        try:
+            return capabilities.CAPS_BYNAME[value_str]
+        except KeyError:
+            return int(value_str)
+
+    def _formatter(self, value: Any) -> str:
+        return str(value)
 
 
 OPTS = [
@@ -52,7 +59,7 @@ OPTS = [
     ),
     cfg.Opt(
         'capabilities',
-        type=types.List(CapNameOrInt),
+        type=types.List(CapNameOrInt()),
         default=[],
         help=_('List of Linux capabilities retained by the privsep daemon.'),
     ),
