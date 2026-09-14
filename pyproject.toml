@@ -45,7 +45,7 @@ eventlet = [
 "oslo.privsep" = "oslo_privsep.priv_context:_list_opts"
 
 [tool.setuptools.packages.find]
-include = ["oslo_privsep"]
+include = ["oslo_privsep*"]
 
 [tool.mypy]
 python_version = "3.11"
