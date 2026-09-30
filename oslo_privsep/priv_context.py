@@ -22,7 +22,7 @@ import logging
 import multiprocessing
 import shlex
 import threading
-from typing import cast, Any, ParamSpec, TypeVar
+from typing import cast, Any, Final, ParamSpec, TypeVar
 
 from oslo_config import cfg
 from oslo_config import types
@@ -40,20 +40,20 @@ R = TypeVar('R')
 
 class CapNameOrInt(types.ConfigType):
     def __init__(self) -> None:
-        return super().__init__('capability')
+        super().__init__('capability')
 
-    def __call__(self, value: Any) -> int:
+    def __call__(self, value: object) -> int:
         value_str = str(value).strip()
         try:
             return capabilities.CAPS_BYNAME[value_str]
         except KeyError:
             return int(value_str)
 
-    def _formatter(self, value: Any) -> str:
+    def _formatter(self, value: object) -> str:
         return str(value)
 
 
-OPTS = [
+OPTS: list[cfg.Opt] = [
     cfg.StrOpt('user', help=_('User that the privsep daemon should run as.')),
     cfg.StrOpt(
         'group', help=_('Group that the privsep daemon should run as.')
@@ -105,8 +105,8 @@ OPTS = [
     ),
 ]
 
-_ENTRYPOINT_ATTR = 'privsep_entrypoint'
-_HELPER_COMMAND_PREFIX = ['sudo']
+_ENTRYPOINT_ATTR: Final[str] = 'privsep_entrypoint'
+_HELPER_COMMAND_PREFIX: list[str] = ['sudo']
 
 
 def _list_opts() -> list[tuple[cfg.OptGroup, list[cfg.Opt]]]:
@@ -199,11 +199,11 @@ class PrivContext:
         self.timeout = timeout
 
     @property
-    def conf(self) -> Any:
+    def conf(self) -> cfg.ConfigOpts.GroupAttr:
         """Return the oslo.config section object as lazily as possible."""
         # Need to avoid looking this up before oslo_config has been
         # properly initialized.
-        return cfg.CONF[self.cfg_section]
+        return cast(cfg.ConfigOpts.GroupAttr, cfg.CONF[self.cfg_section])
 
     def __repr__(self) -> str:
         return f'PrivContext(cfg_section={self.cfg_section})'
@@ -308,7 +308,7 @@ class PrivContext:
         setattr(f, _ENTRYPOINT_ATTR, self)
         return f
 
-    def is_entrypoint(self, func: Callable[..., Any]) -> bool:
+    def is_entrypoint(self, func: object) -> bool:
         return getattr(func, _ENTRYPOINT_ATTR, None) is self
 
     def _wrap(
