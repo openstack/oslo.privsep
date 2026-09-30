@@ -14,8 +14,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 import copy
 import enum
 import functools
@@ -23,7 +22,7 @@ import logging
 import multiprocessing
 import shlex
 import threading
-from typing import Any
+from typing import cast, Any, ParamSpec, TypeVar
 
 from oslo_config import cfg
 from oslo_config import types
@@ -33,8 +32,10 @@ from oslo_privsep._i18n import _
 from oslo_privsep import capabilities
 from oslo_privsep import daemon
 
-
 LOG = logging.getLogger(__name__)
+
+P = ParamSpec('P')
+R = TypeVar('R')
 
 
 class CapNameOrInt(types.ConfigType):
@@ -258,18 +259,18 @@ class PrivContext:
     def set_client_mode(self, enabled: bool) -> None:
         self.client_mode = enabled
 
-    def entrypoint(self, func: Callable[..., Any]) -> functools.partial[Any]:
+    def entrypoint(self, func: Callable[..., R]) -> functools.partial[R]:
         """This is intended to be used as a decorator."""
         return self._entrypoint(func)
 
     def entrypoint_with_timeout(
         self, timeout: float
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """This is intended to be used as a decorator with timeout."""
 
-        def wrap(func: Callable[..., Any]) -> Callable[..., Any]:
+        def wrap(func: Callable[P, R]) -> Callable[P, R]:
             @functools.wraps(func)
-            def inner(*args: Any, **kwargs: Any) -> Any:
+            def inner(*args: P.args, **kwargs: P.kwargs) -> R:
                 f = self._entrypoint(func)
                 return f(*args, _wrap_timeout=timeout, **kwargs)
 
@@ -278,7 +279,7 @@ class PrivContext:
 
         return wrap
 
-    def _entrypoint(self, func: Callable[..., Any]) -> functools.partial[Any]:
+    def _entrypoint(self, func: Callable[P, R]) -> functools.partial[R]:
         if not func.__module__.startswith(self.prefix):
             raise AssertionError(
                 f'{self!r} entrypoints must be below "{self.prefix}"'
@@ -303,11 +304,11 @@ class PrivContext:
 
     def _wrap(
         self,
-        func: Callable[..., Any],
+        func: Callable[..., R],
         *args: Any,
         _wrap_timeout: float | None = None,
         **kwargs: Any,
-    ) -> Any:
+    ) -> R:
         if self.client_mode:
             name = f'{func.__module__}.{func.__name__}'
             if self.channel is not None and not self.channel.running:
@@ -319,7 +320,9 @@ class PrivContext:
                 # narrow type: this will always be non-None thank to the above
                 raise RuntimeError('channel is not initialized')
             r_call_timeout = _wrap_timeout or self.timeout
-            return self.channel.remote_call(name, args, kwargs, r_call_timeout)
+            return cast(
+                R, self.channel.remote_call(name, args, kwargs, r_call_timeout)
+            )
         else:
             return func(*args, **kwargs)
 
