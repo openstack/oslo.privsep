@@ -150,6 +150,15 @@ class PrivContextTest(testctx.TestContextTestCase):
         context.start()
         self.assertTrue(context.start_lock.__enter__.called)
 
+    def test_entrypoint_preserves_metadata(self):
+        def sample_func(a: int) -> int:
+            """Sample docstring."""
+            return a + 1
+
+        wrapped = testctx.context.entrypoint(sample_func)
+        self.assertEqual('sample_func', wrapped.__name__)
+        self.assertEqual('Sample docstring.', wrapped.__doc__)
+
 
 @testtools.skipIf(
     platform.system() != 'Linux', 'works only on Linux platform.'

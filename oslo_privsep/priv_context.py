@@ -259,9 +259,16 @@ class PrivContext:
     def set_client_mode(self, enabled: bool) -> None:
         self.client_mode = enabled
 
-    def entrypoint(self, func: Callable[..., R]) -> functools.partial[R]:
+    def entrypoint(self, func: Callable[P, R]) -> Callable[P, R]:
         """This is intended to be used as a decorator."""
-        return self._entrypoint(func)
+        f = self._entrypoint(func)
+
+        @functools.wraps(func)
+        def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+            return f(*args, **kwargs)
+
+        setattr(inner, _ENTRYPOINT_ATTR, self)
+        return inner
 
     def entrypoint_with_timeout(
         self, timeout: float
@@ -269,9 +276,10 @@ class PrivContext:
         """This is intended to be used as a decorator with timeout."""
 
         def wrap(func: Callable[P, R]) -> Callable[P, R]:
+            f = self._entrypoint(func)
+
             @functools.wraps(func)
             def inner(*args: P.args, **kwargs: P.kwargs) -> R:
-                f = self._entrypoint(func)
                 return f(*args, _wrap_timeout=timeout, **kwargs)
 
             setattr(inner, _ENTRYPOINT_ATTR, self)
@@ -296,6 +304,7 @@ class PrivContext:
             )
 
         f = functools.partial(self._wrap, func)
+        functools.update_wrapper(f, func)
         setattr(f, _ENTRYPOINT_ATTR, self)
         return f
 
