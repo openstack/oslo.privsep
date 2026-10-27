@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The privsep daemon no longer imports eventlet unless the process that
+    starts it has already imported it. Importing eventlet only to check
+    whether it had monkey patched anything cost every privsep daemon about
+    20MB of resident memory.

@@ -18,6 +18,7 @@ import fixtures
 import functools
 import logging as pylogging
 import platform
+import subprocess
 import sys
 import time
 from unittest import mock
@@ -369,3 +370,19 @@ class UnMonkeyPatch(base.BaseTestCase):
                     )
                     original_attr = getattr(orig_mod, attr_name, None)
                     self.assertEqual(un_monkey_patched_attr, original_attr)
+
+
+class EventletNotImportedTest(base.BaseTestCase):
+    def test_daemon_import_does_not_import_eventlet(self):
+        # A fresh interpreter: this test process has already imported
+        # eventlet at module level.
+        out = subprocess.check_output(
+            [
+                sys.executable,
+                '-c',
+                'import sys; import oslo_privsep.daemon; '
+                'print("eventlet" in sys.modules)',
+            ],
+            text=True,
+        )
+        self.assertEqual('False', out.strip())
