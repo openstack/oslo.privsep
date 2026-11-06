@@ -101,12 +101,12 @@ def _null() -> list[Any]:
 
 
 _MONKEY_PATCHED = False
-try:
+# Importing eventlet costs every daemon ~20MB, and if nothing has imported it
+# yet it cannot have monkey patched anything.
+if 'eventlet' in sys.modules:
     import eventlet
     from eventlet import patcher
-except ImportError:
-    pass
-else:
+
     for module in EVENTLET_MODULES:
         if eventlet.patcher.is_monkey_patched(module):
             _MONKEY_PATCHED = True
