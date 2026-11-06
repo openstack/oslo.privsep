@@ -38,7 +38,7 @@ P = ParamSpec('P')
 R = TypeVar('R')
 
 
-class CapNameOrInt(types.ConfigType):
+class CapNameOrInt(types.ConfigType[int]):
     def __init__(self) -> None:
         super().__init__('capability')
 
